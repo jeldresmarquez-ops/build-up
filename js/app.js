@@ -102,6 +102,14 @@ function startShell() {
   startLoop();
 }
 
+// Android / Chrome: keep the install prompt so the Profile page can offer one-tap install.
+window.addEventListener('beforeinstallprompt', e => {
+  e.preventDefault();
+  window.__bpInstall = e;
+  document.dispatchEvent(new Event('bp-installable'));
+});
+window.addEventListener('appinstalled', () => { window.__bpInstall = null; });
+
 function boot() {
   applyAppearance();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {

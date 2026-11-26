@@ -405,3 +405,4 @@ html.no-motion *, html.no-motion *::before, html.no-motion *::after { animation:
 a.card.row-flex, button.card.row-flex, a.card.between, button.card.between { display: flex; }
 .view > * + * { margin-top: 16px; }
 .view > .topbar + * { margin-top: 0; }
+[hidden] { display: none !important; }

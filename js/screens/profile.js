@@ -27,9 +27,10 @@ export function render() {
         <a class="icon-btn" href="#/profile/edit" aria-label="${L('Edit profile', 'Profil bearbeiten')}">${icon('edit')}</a></div>
       <div class="card card-tight"><div class="row-flex" style="margin-bottom:10px">${icon('globe', 'ic-sm')}<span class="row-title">Sprache / Language</span></div>
         <div class="seg"><button type="button" class="${lang === 'de' ? 'on' : ''}" data-lang="de">Deutsch</button><button type="button" class="${lang === 'en' ? 'on' : ''}" data-lang="en">English</button></div></div>
-      ${!isStandalone() ? `<div class="callout">${icon('phone')}<span><b style="color:var(--text)">${L('Install BUILD UP:', 'BUILD UP installieren:')}</b> ${ios
+      ${!isStandalone() ? `<div class="callout" style="flex-wrap:wrap">${icon('phone')}<span class="grow"><b style="color:var(--text)">${L('Install BUILD UP:', 'BUILD UP installieren:')}</b> ${ios
         ? L('tap the Share button in Safari, then “Add to Home Screen”.', 'tippe in Safari auf „Teilen“ und dann auf „Zum Home-Bildschirm“.')
-        : L('open the browser menu and choose “Install app” or “Add to Home screen”.', 'öffne das Browser-Menü und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.')}</span></div>` : ''}
+        : L('in Chrome, open the menu (⋮) and choose “Install app”.', 'öffne in Chrome das Menü (⋮) und wähle „App installieren“.')}</span>
+        <button class="btn btn-accent btn-sm btn-block" data-install ${window.__bpInstall ? '' : 'hidden'}>${icon('download', 'ic-sm')} ${L('Install now', 'Jetzt installieren')}</button></div>` : ''}
       <div class="card">
         <p class="eyebrow">${L('Goals', 'Ziele')}</p>${tags(p.goals.map(g => label(GOALS, g)), L('No goals selected.', 'Keine Ziele gewählt.'))}
         <p class="eyebrow mt">${L('Focus areas', 'Schwerpunkte')}</p>${tags(p.areas.map(a => label(AREAS_TO_IMPROVE, a)), L('No focus areas selected.', 'Keine Schwerpunkte gewählt.'))}
@@ -53,10 +54,21 @@ export function render() {
       </div></div>
       <p class="note center">BUILD UP · Version ${VERSION}</p>`,
     mount(view) {
-      view.addEventListener('click', e => {
+      view.addEventListener('click', async e => {
         const b = e.target.closest('[data-lang]');
         if (b && b.dataset.lang !== lang) setLang(b.dataset.lang);
+        if (e.target.closest('[data-install]') && window.__bpInstall) {
+          const ev = window.__bpInstall;
+          window.__bpInstall = null;
+          ev.prompt();
+          try { await ev.userChoice; } catch { /* ignore */ }
+          view.querySelector('[data-install]')?.setAttribute('hidden', '');
+        }
       });
+      // Chrome on Android tells us when one-tap install is possible.
+      const show = () => view.querySelector('[data-install]')?.removeAttribute('hidden');
+      document.addEventListener('bp-installable', show);
+      return () => document.removeEventListener('bp-installable', show);
     },
   };
 }
