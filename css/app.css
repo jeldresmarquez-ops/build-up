@@ -290,8 +290,8 @@ input[type="time"].input { color-scheme: dark; }
 .startup-inner { text-align: center; max-width: 420px; animation: fade .8s ease both; }
 .startup blockquote { margin: 36px 0 0; font-size: 19px; line-height: 1.45; font-weight: 500; color: #E4E4E7; letter-spacing: -.01em; animation: fade 1s .35s ease both; }
 .startup-skip { position: absolute; top: calc(var(--st) + 14px); right: 18px; color: var(--dim); font-size: 14px; padding: 10px 14px; }
-.startup-bar { position: absolute; bottom: calc(var(--sb) + 40px); width: 64px; height: 2px; background: #222; border-radius: 1px; overflow: hidden; }
-.startup-bar i { display: block; height: 100%; background: #fff; animation: load 5.5s linear both; }
+.startup-bar { position: absolute; bottom: calc(var(--sb) + 40px); width: 120px; height: 2px; background: #222; border-radius: 1px; overflow: hidden; }
+.startup-bar i { display: block; height: 100%; background: #fff; animation: load 7s linear both; }
 @keyframes load { from { width: 0; } to { width: 100%; } }
 
 /* ---------- onboarding ---------- */

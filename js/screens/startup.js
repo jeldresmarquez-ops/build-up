@@ -2,7 +2,7 @@ import { esc, logo } from '../ui.js';
 import { L } from '../i18n.js';
 import { nextQuote } from '../logic/quotes.js';
 
-// Short motivational splash on every launch (~5.5 s, skippable).
+// Short motivational splash on every launch (~7 s, skippable).
 export function show() {
   const q = nextQuote();
   const el = document.createElement('div');
@@ -19,5 +19,5 @@ export function show() {
     setTimeout(() => el.remove(), 450);
   };
   el.addEventListener('click', close);
-  setTimeout(close, 5500);
+  setTimeout(close, 7000);
 }
