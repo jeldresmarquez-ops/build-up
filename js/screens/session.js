@@ -1,5 +1,7 @@
 import { db } from '../store.js';
 import { esc, icon, fmtDur, fmtMin, sheet, confirmDialog } from '../ui.js';
+import { L } from '../i18n.js';
+import { nameOf } from '../logic/plan.js';
 import { EX } from '../data/exercises.js';
 import * as S from '../logic/session.js';
 import { unit } from '../logic/stats.js';
@@ -23,11 +25,13 @@ function beep(times = 1) {
   navigator.vibrate?.(times > 1 ? [120, 80, 120] : 120);
 }
 
+const setOf = (a, b) => L('Set {a} of {b}', 'Satz {a} von {b}', { a, b });
+
 export function render() {
   const s = db.session;
   if (!s) {
-    return { html: `<div class="empty mt-lg">${icon('workout')}<b>No active workout</b>Choose a workout to get started.</div>
-      <a class="btn btn-primary btn-block" href="#/workout">Go to workouts</a>`, noNav: false };
+    return { html: `<div class="empty mt-lg">${icon('workout')}<b>${L('No active workout', 'Kein aktives Training')}</b>${L('Choose a workout to get started.', 'Wähle ein Training, um loszulegen.')}</div>
+      <a class="btn btn-primary btn-block" href="#/workout">${L('Go to workouts', 'Zu den Trainings')}</a>` };
   }
   let reps = null;
   let lock = null;
@@ -40,48 +44,51 @@ export function render() {
     if (reps === null) reps = it.target;
     const segs = s.items.map((x, k) => `<i class="${k < s.ex ? 'done' : k === s.ex ? 'cur' : ''}"></i>`).join('');
     let main = '', actions = '';
-    const nextIt = s.phase === 'rest' ? it : null;
     if (s.phase === 'rest') {
-      main = `<p class="eyebrow">Rest</p>
+      main = `<p class="eyebrow">${L('Rest', 'Pause')}</p>
         <div class="session-big rest" data-t="count">${Math.ceil(S.remaining(s) / 1000)}</div>
-        <p class="session-unit">seconds</p>`;
-      actions = `<div class="session-next">${icon('right')}<div class="grow"><p class="tiny muted">Up next</p>
-          <p class="row-title">${e.name} · Set ${s.set + 1} of ${it.sets}</p></div></div>
-        <div class="grid2"><button class="btn btn-ghost" data-act="plus">+15 s</button><button class="btn btn-primary" data-act="skip-rest">Skip rest</button></div>`;
+        <p class="session-unit">${L('seconds', 'Sekunden')}</p>`;
+      actions = `<div class="session-next">${icon('right')}<div class="grow"><p class="tiny muted">${L('Up next', 'Als Nächstes')}</p>
+          <p class="row-title">${e.name} · ${setOf(s.set + 1, it.sets)}</p></div></div>
+        <div class="grid2"><button class="btn btn-ghost" data-act="plus">+15 s</button><button class="btn btn-primary" data-act="skip-rest">${L('Skip rest', 'Pause überspringen')}</button></div>`;
     } else if (e.type === 'time') {
       const total = it.target * (e.perSide ? 2 : 1);
       const running = s.phase === 'timed';
-      main = `<p class="eyebrow">Set ${s.set + 1} of ${it.sets}</p>
+      const side = !e.perSide ? L('seconds', 'Sekunden')
+        : running && S.remaining(s) <= it.target * 1000 ? L('Second side', 'Zweite Seite')
+        : running ? L('First side', 'Erste Seite')
+        : L('{n}s each side', '{n}s pro Seite', { n: it.target });
+      main = `<p class="eyebrow">${setOf(s.set + 1, it.sets)}</p>
         <h1 class="session-name mt-sm">${e.name}</h1>
         <div class="session-big" data-t="count">${running ? Math.ceil(S.remaining(s) / 1000) : total}</div>
-        <p class="session-unit" data-t="side">${e.perSide ? (running && S.remaining(s) <= it.target * 1000 ? 'Second side' : running ? 'First side' : `${it.target}s each side`) : 'seconds'}</p>`;
+        <p class="session-unit" data-t="side">${side}</p>`;
       actions = running
-        ? `<button class="btn btn-primary btn-block btn-xl" data-act="time-done">Done</button>`
-        : `<button class="btn btn-primary btn-block btn-xl" data-act="time-start">${icon('play', 'ic-sm')} Start ${total}s</button>`;
+        ? `<button class="btn btn-primary btn-block btn-xl" data-act="time-done">${L('Done', 'Fertig')}</button>`
+        : `<button class="btn btn-primary btn-block btn-xl" data-act="time-start">${icon('play', 'ic-sm')} ${L('Start {n}s', '{n}s starten', { n: total })}</button>`;
     } else {
-      main = `<p class="eyebrow">Set ${s.set + 1} of ${it.sets}</p>
+      main = `<p class="eyebrow">${setOf(s.set + 1, it.sets)}</p>
         <h1 class="session-name mt-sm">${e.name}</h1>
         <div class="session-big" data-t="reps">${reps}</div>
-        <p class="session-unit">${e.perSide ? 'reps each side' : 'reps'} · target ${it.target}</p>
-        <div class="stepper mt"><button data-act="minus" aria-label="Less">${icon('minus')}</button><button data-act="more" aria-label="More">${icon('plus')}</button></div>`;
-      actions = `<button class="btn btn-primary btn-block btn-xl" data-act="reps-done">${icon('check', 'ic-sm')} Complete set</button>`;
+        <p class="session-unit">${e.perSide ? L('reps each side', 'Wdh. pro Seite') : L('reps', 'Wiederholungen')} · ${L('target', 'Ziel')} ${it.target}</p>
+        <div class="stepper mt"><button data-act="minus" aria-label="${L('Less', 'Weniger')}">${icon('minus')}</button><button data-act="more" aria-label="${L('More', 'Mehr')}">${icon('plus')}</button></div>`;
+      actions = `<button class="btn btn-primary btn-block btn-xl" data-act="reps-done">${icon('check', 'ic-sm')} ${L('Complete set', 'Satz abschließen')}</button>`;
     }
     view.innerHTML = `<div class="session">
       <div class="session-top">
-        <button class="icon-btn" data-act="leave" aria-label="Leave">${icon('x')}</button>
+        <button class="icon-btn" data-act="leave" aria-label="${L('Leave', 'Verlassen')}">${icon('x')}</button>
         <span class="session-clock" data-t="clock">${fmtDur(S.elapsed(s) / 1000)}</span>
-        <button class="icon-btn" data-act="pause" aria-label="Pause">${icon('pause')}</button>
+        <button class="icon-btn" data-act="pause" aria-label="${L('Pause', 'Pause')}">${icon('pause')}</button>
       </div>
       <div class="seg-bar">${segs}</div>
       <div class="session-main">${main}</div>
       <div class="session-actions">${actions}
-        <div class="between"><button class="link-btn" data-act="how">${icon('info', 'ic-sm')} How to</button>
-          <button class="link-btn" data-act="skip-ex">Skip exercise</button>
-          <button class="link-btn" data-act="finish">Finish</button></div></div>
-      ${s.paused ? `<div class="paused-veil"><p class="eyebrow">Paused</p><p class="session-clock" style="font-size:44px">${fmtDur(S.elapsed(s) / 1000)}</p>
-        <button class="btn btn-primary btn-xl" data-act="resume">${icon('play', 'ic-sm')} Continue</button>
-        <button class="btn btn-ghost" data-act="finish">Finish workout</button>
-        <button class="btn btn-ghost" data-act="leave">Back to app</button></div>` : ''}
+        <div class="between"><button class="link-btn" data-act="how">${icon('info', 'ic-sm')} ${L('How to', 'Anleitung')}</button>
+          <button class="link-btn" data-act="skip-ex">${L('Skip exercise', 'Übung überspringen')}</button>
+          <button class="link-btn" data-act="finish">${L('Finish', 'Beenden')}</button></div></div>
+      ${s.paused ? `<div class="paused-veil"><p class="eyebrow">${L('Paused', 'Pausiert')}</p><p class="session-clock" style="font-size:44px">${fmtDur(S.elapsed(s) / 1000)}</p>
+        <button class="btn btn-primary btn-xl" data-act="resume">${icon('play', 'ic-sm')} ${L('Continue', 'Weiter')}</button>
+        <button class="btn btn-ghost" data-act="finish">${L('Finish workout', 'Training beenden')}</button>
+        <button class="btn btn-ghost" data-act="leave">${L('Back to app', 'Zurück zur App')}</button></div>` : ''}
     </div>`;
   }
 
@@ -98,7 +105,7 @@ export function render() {
       if (s.phase === 'timed' && e.perSide && !halfBeeped && left <= it.target * 1000) {
         halfBeeped = true; beep(1);
         const side = view.querySelector('[data-t="side"]');
-        if (side) side.textContent = 'Switch sides';
+        if (side) side.textContent = L('Switch sides', 'Seite wechseln');
       }
       if (left <= 0) {
         if (s.phase === 'rest') { beep(2); S.endRest(s); reps = null; paint(); }
@@ -128,10 +135,8 @@ export function render() {
       case 'time-start': beep(1); halfBeeped = false; S.startTimed(s); paint(); break;
       case 'time-done': {
         const e = EX[it.exId];
-        const total = it.target * (e.perSide ? 2 : 1);
         const held = (Date.now() - s.workStart) / 1000;
         done(S.completeSet(s, Math.min(it.target, held / (e.perSide ? 2 : 1))));
-        void total;
         break;
       }
       case 'plus': S.addRest(s, 15); tick(); break;
@@ -145,8 +150,8 @@ export function render() {
       case 'finish': {
         const sets = s.items.reduce((n, x) => n + x.done.length, 0);
         const ok = await confirmDialog(sets
-          ? { title: 'Finish workout?', text: `You completed ${sets} set${sets > 1 ? 's' : ''}. It will be saved to your history.`, confirm: 'Finish & save' }
-          : { title: 'Discard workout?', text: 'No sets completed yet, so nothing will be saved.', confirm: 'Discard', danger: true });
+          ? { title: L('Finish workout?', 'Training beenden?'), text: L('You completed {n} sets. They will be saved to your history.', 'Du hast {n} Sätze geschafft. Sie werden im Verlauf gespeichert.', { n: sets }), confirm: L('Finish & save', 'Beenden & speichern') }
+          : { title: L('Discard workout?', 'Training verwerfen?'), text: L('No sets completed yet, so nothing will be saved.', 'Noch kein Satz geschafft, daher wird nichts gespeichert.'), confirm: L('Discard', 'Verwerfen'), danger: true });
         if (ok) finish();
         break;
       }
@@ -176,33 +181,35 @@ export function render() {
 }
 
 function howTo(e) {
-  sheet(`<p class="eyebrow">How to</p><h3 class="sheet-title mt-sm">${e.name}</h3>
+  sheet(`<p class="eyebrow">${L('How to', 'Anleitung')}</p><h3 class="sheet-title mt-sm">${e.name}</h3>
     <ol class="steps">${e.technique.map(t => `<li>${esc(t)}</li>`).join('')}</ol>
-    <p class="eyebrow mt">Safety</p><ul class="bullets safe mt-sm">${e.safety.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
-    <button class="btn btn-ghost btn-block mt" data-close>Got it</button>`);
+    <p class="eyebrow mt">${L('Safety', 'Sicherheit')}</p><ul class="bullets safe mt-sm">${e.safety.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
+    <button class="btn btn-ghost btn-block mt" data-close>${L('Got it', 'Verstanden')}</button>`);
 }
 
 // ---------- summary ----------
 export function summary({ id }) {
   const e = db.history.find(h => h.id === id);
-  if (!e) return { html: `<div class="empty mt-lg"><b>Workout not found</b></div><a class="btn btn-primary btn-block" href="#/home">Home</a>` };
+  if (!e) return { html: `<div class="empty mt-lg"><b>${L('Workout not found', 'Training nicht gefunden')}</b></div><a class="btn btn-primary btn-block" href="#/home">${L('Home', 'Home')}</a>` };
   const msgs = [...MESSAGES.consistency, ...MESSAGES.training];
   const msg = msgs[db.history.length % msgs.length];
   return {
     html: `<div class="center mt-lg"><div class="check-badge">${icon('check')}</div>
-        <p class="eyebrow mt">Workout complete</p><h1 class="h1 mt-sm">${esc(e.name)}</h1>
+        <p class="eyebrow mt">${L('Workout complete', 'Training geschafft')}</p><h1 class="h1 mt-sm">${esc(nameOf(e))}</h1>
         <p class="muted mt-sm">${esc(msg)}</p></div>
       <div class="stat-row">
-        <div class="stat"><div class="num">${fmtMin(e.dur).replace(' min', '')}<span class="small muted"> min</span></div><div class="tiny">Duration</div></div>
-        <div class="stat"><div class="num">${e.sets}</div><div class="tiny">Sets</div></div>
-        <div class="stat"><div class="num">${e.reps}</div><div class="tiny">Reps</div></div>
+        <div class="stat"><div class="num">${Math.round(e.dur / 60)}<span class="small muted"> min</span></div><div class="tiny">${L('Duration', 'Dauer')}</div></div>
+        <div class="stat"><div class="num">${e.sets}</div><div class="tiny">${L('Sets', 'Sätze')}</div></div>
+        <div class="stat"><div class="num">${e.reps}</div><div class="tiny">${L('Reps', 'Wdh.')}</div></div>
       </div>
-      ${e.newRecords?.length ? `<div class="card"><p class="eyebrow">New personal records</p>
+      ${e.newRecords?.length ? `<div class="card"><p class="eyebrow">${L('New personal records', 'Neue persönliche Rekorde')}</p>
         ${e.newRecords.map(r => `<div class="row"><div class="row-icon">${icon('star')}</div><div class="grow"><div class="row-title">${EX[r.exId].name}</div>
           <div class="row-sub">${unit(r.exId, r.prev)} → ${unit(r.exId, r.best)}</div></div></div>`).join('')}</div>` : ''}
       <div class="card list-card">${e.items.map(it => `<div class="row"><div class="grow"><div class="row-title">${EX[it.exId].name}</div>
         <div class="row-sub">${it.done.map(d => unit(it.exId, d)).join(' · ')}</div></div></div>`).join('')}</div>
-      <div class="stack-sm"><a class="btn btn-primary btn-block" href="#/home">Back to home</a>
-        <a class="btn btn-ghost btn-block" href="#/progress">View progress</a></div>`,
+      <div class="stack-sm"><a class="btn btn-primary btn-block" href="#/home">${L('Back to home', 'Zurück zum Start')}</a>
+        <a class="btn btn-ghost btn-block" href="#/progress">${L('View progress', 'Fortschritt ansehen')}</a></div>`,
   };
 }
+
+export { fmtMin };

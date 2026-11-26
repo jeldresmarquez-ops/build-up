@@ -1,9 +1,10 @@
 // Open Food Facts lookup + BUILD UP composition indicator.
 import { db, save } from '../store.js';
+import { L, lang } from '../i18n.js';
 
 const BASE = 'https://world.openfoodfacts.org';
 const FIELDS = [
-  'code', 'product_name', 'product_name_en', 'generic_name', 'brands', 'image_front_small_url', 'image_front_url',
+  'code', 'product_name', 'product_name_en', 'product_name_de', 'ingredients_text_de', 'generic_name', 'brands', 'image_front_small_url', 'image_front_url',
   'nutriments', 'ingredients_text', 'ingredients_text_en', 'serving_size', 'quantity',
   'product_quantity_unit', 'categories_tags',
 ].join(',');
@@ -47,7 +48,7 @@ export function normalize(p) {
   const hasServing = Object.values(serving).some(v => v !== null);
   return {
     code: String(p.code || ''),
-    name: (p.product_name_en || p.product_name || p.generic_name || '').trim() || 'Unnamed product',
+    name: ((lang === 'de' ? p.product_name_de : null) || p.product_name_en || p.product_name || p.generic_name || '').trim() || 'Unnamed product',
     brand: (p.brands || '').split(',')[0].trim(),
     image: p.image_front_url || p.image_front_small_url || '',
     thumb: p.image_front_small_url || p.image_front_url || '',
@@ -56,7 +57,7 @@ export function normalize(p) {
     liquid: isLiquid(p),
     n: per100,
     s: hasServing ? serving : null,
-    ingredients: (p.ingredients_text_en || p.ingredients_text || '').trim(),
+    ingredients: ((lang === 'de' ? p.ingredients_text_de : null) || p.ingredients_text_en || p.ingredients_text || '').trim(),
   };
 }
 
@@ -116,7 +117,9 @@ export const validBarcode = c => /^\d{8,14}$/.test(String(c).trim());
 // Thresholds per 100 g / 100 ml, based on UK front-of-pack guidance.
 const T_FOOD = { sugar: [5, 22.5], sat: [1.5, 5], salt: [0.3, 1.5], fat: [3, 17.5] };
 const T_DRINK = { sugar: [2.5, 11.25], sat: [0.75, 2.5], salt: [0.3, 0.75], fat: [1.5, 8.75] };
-const NAMES = { sugar: 'sugar', sat: 'saturated fat', salt: 'salt', fat: 'fat' };
+const NAMES = lang === 'de'
+  ? { sugar: 'Zucker', sat: 'gesättigte Fettsäuren', salt: 'Salz', fat: 'Fett' }
+  : { sugar: 'sugar', sat: 'saturated fat', salt: 'salt', fat: 'fat' };
 
 export function rate(p) {
   const n = p.n || {};
@@ -126,8 +129,8 @@ export function rate(p) {
   const missing = keys.filter(k => n[k] === null || n[k] === undefined);
   const known = ['sugar', 'sat', 'salt'].filter(k => n[k] !== null && n[k] !== undefined).length;
   if (known < 2) {
-    return { level: 'unknown', label: 'Not enough data',
-      reasons: ['Key nutrition values are missing for this product.'],
+    return { level: 'unknown', label: L('Not enough data', 'Nicht genug Daten'),
+      reasons: [L('Key nutrition values are missing for this product.', 'Wichtige Nährwerte fehlen bei diesem Produkt.')],
       incomplete: true, missing };
   }
   let score = 0, highs = 0;
@@ -139,27 +142,31 @@ export function rate(p) {
     const w = k === 'fat' ? 0.5 : 1;
     if (v > hi) {
       score += 2 * w; if (k !== 'fat') highs++;
-      neg.push(`High in ${NAMES[k]} (${fmtN(v)} g / ${u})`);
+      neg.push(L('High in {x} ({v} g / {u})', 'Viel {x} ({v} g / {u})', { x: NAMES[k], v: fmtN(v), u }));
     } else if (v > lo) {
       score += 1 * w;
-      if (k !== 'fat') neg.push(`Medium ${NAMES[k]} (${fmtN(v)} g / ${u})`);
+      if (k !== 'fat') neg.push(L('Medium {x} ({v} g / {u})', 'Mittel: {x} ({v} g / {u})', { x: NAMES[k], v: fmtN(v), u }));
     } else if (k !== 'fat') {
-      pos.push(`Low in ${NAMES[k]}`);
+      pos.push(L('Low in {x}', 'Wenig {x}', { x: NAMES[k] }));
     }
   }
   if (n.fibre !== null && n.fibre !== undefined) {
-    if (n.fibre >= 6) { score -= 1.5; pos.unshift(`High in fibre (${fmtN(n.fibre)} g)`); }
-    else if (n.fibre >= 3) { score -= 0.75; pos.unshift(`Source of fibre (${fmtN(n.fibre)} g)`); }
+    if (n.fibre >= 6) { score -= 1.5; pos.unshift(L('High in fibre ({v} g)', 'Viele Ballaststoffe ({v} g)', { v: fmtN(n.fibre) })); }
+    else if (n.fibre >= 3) { score -= 0.75; pos.unshift(L('Source of fibre ({v} g)', 'Ballaststoffquelle ({v} g)', { v: fmtN(n.fibre) })); }
   }
   if (!p.liquid && n.protein !== null && n.protein !== undefined) {
-    if (n.protein >= 10) { score -= 1; pos.unshift(`Rich in protein (${fmtN(n.protein)} g)`); }
-    else if (n.protein >= 5) { score -= 0.5; pos.unshift(`Contains protein (${fmtN(n.protein)} g)`); }
+    if (n.protein >= 10) { score -= 1; pos.unshift(L('Rich in protein ({v} g)', 'Reich an Eiweiß ({v} g)', { v: fmtN(n.protein) })); }
+    else if (n.protein >= 5) { score -= 0.5; pos.unshift(L('Contains protein ({v} g)', 'Enthält Eiweiß ({v} g)', { v: fmtN(n.protein) })); }
   }
   let level;
   if (highs >= 2 || score >= 4) level = 'red';
   else if (highs === 0 && score <= 1.25) level = 'green';
   else level = 'orange';
-  const label = { green: 'Generally favorable composition', orange: 'Depends on product and portion', red: 'Less favorable composition' }[level];
+  const label = {
+    green: L('Generally favorable composition', 'Allgemein günstige Zusammensetzung'),
+    orange: L('Depends on product and portion', 'Abhängig von Produkt und Portion'),
+    red: L('Less favorable composition', 'Weniger günstige Zusammensetzung'),
+  }[level];
   const reasons = level === 'green' ? [...pos, ...neg] : [...neg, ...pos];
   return { level, label, reasons: reasons.slice(0, 4), incomplete: missing.length > 0, missing };
 }

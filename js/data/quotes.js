@@ -23,8 +23,34 @@ export const QUOTES = [
   'Reminder: Only ego will help you to achieve more than your potential.',
 ];
 
+import { lang } from '../i18n.js';
+
 // Short BUILD UP messages (app copy, not quotes from people).
-export const MESSAGES = {
+const MESSAGES_DE = {
+  discipline: [
+    'Disziplin heißt, das zu wählen, was du am meisten willst – nicht das, was du jetzt willst.',
+    'Zieh es durch, auch an langsamen Tagen.',
+    'Motivation vergeht. Gewohnheiten bleiben.',
+    'Mach die Arbeit. Und morgen wieder.',
+    'Du musst dich nicht bereit fühlen. Du musst anfangen.',
+  ],
+  training: [
+    'Kleine Schritte. Große Ergebnisse.',
+    'Eine Wiederholung mehr ist ein Schritt mehr.',
+    'Trainiere für die Person, die du wirst.',
+    'Erst saubere Technik. Dann kommt die Kraft.',
+    'Zehn Minuten zählen auch.',
+  ],
+  consistency: [
+    'Beständigkeit schlägt Intensität.',
+    'Jedes Training ist ein Baustein. Bau weiter.',
+    'Fortschritt ist leise. Bleib dran.',
+    'Einen Tag verpassen, nie zwei.',
+    'Die Routine ist die Belohnung.',
+  ],
+};
+
+const MESSAGES_EN = {
   discipline: [
     'Discipline is choosing what you want most over what you want now.',
     'Show up, even on the slow days.',
@@ -47,3 +73,5 @@ export const MESSAGES = {
     'The routine is the reward.',
   ],
 };
+
+export const MESSAGES = lang === 'de' ? MESSAGES_DE : MESSAGES_EN;

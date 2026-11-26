@@ -2,24 +2,27 @@
 import { db } from '../store.js';
 import { EX } from '../data/exercises.js';
 import { dayKey, startOfDay, weekdayIdx } from '../ui.js';
+import { L } from '../i18n.js';
 
 export const CATEGORIES = [
-  { id: 'full', name: 'Full Body', desc: 'Every major muscle group in one session.',
+  { id: 'full', name: L('Full Body', 'Ganzkörper'), desc: L('Every major muscle group in one session.', 'Alle großen Muskelgruppen in einer Einheit.'),
     pool: ['jumping-jack', 'squat', 'pushup', 'glute-bridge', 'lunge', 'mountain-climber', 'superman', 'plank', 'burpee'] },
-  { id: 'upper', name: 'Upper Body', desc: 'Chest, shoulders, arms and back.',
+  { id: 'upper', name: L('Upper Body', 'Oberkörper'), desc: L('Chest, shoulders, arms and back.', 'Brust, Schultern, Arme und Rücken.'),
     pool: ['incline-pushup', 'pushup', 'superman', 'mountain-climber', 'plank', 'side-plank'] },
-  { id: 'lower', name: 'Lower Body', desc: 'Legs and glutes for strength and power.',
+  { id: 'lower', name: L('Lower Body', 'Unterkörper'), desc: L('Legs and glutes for strength and power.', 'Beine und Gesäß für Kraft und Power.'),
     pool: ['squat', 'lunge', 'glute-bridge', 'calf-raise', 'wall-sit', 'skater-jump'] },
-  { id: 'core', name: 'Core', desc: 'A stable, strong midsection.',
+  { id: 'core', name: L('Core', 'Rumpf'), desc: L('A stable, strong midsection.', 'Eine stabile, starke Körpermitte.'),
     pool: ['plank', 'crunch', 'glute-bridge', 'side-plank', 'superman', 'mountain-climber', 'situp'] },
-  { id: 'football', name: 'Football Fitness', desc: 'Speed, agility and endurance for the pitch.',
+  { id: 'football', name: L('Football Fitness', 'Fußball-Fitness'), desc: L('Speed, agility and endurance for the pitch.', 'Schnelligkeit, Beweglichkeit und Ausdauer für den Platz.'),
     pool: ['high-knees', 'skater-jump', 'lunge', 'squat', 'calf-raise', 'mountain-climber', 'side-plank', 'burpee'] },
-  { id: 'beginner', name: 'Beginner', desc: 'Simple moves to build the basics.', level: 'beginner',
+  { id: 'beginner', name: L('Beginner', 'Einsteiger'), desc: L('Simple moves to build the basics.', 'Einfache Übungen für die Grundlagen.'), level: 'beginner',
     pool: ['jumping-jack', 'squat', 'incline-pushup', 'glute-bridge', 'plank', 'superman'] },
-  { id: 'general', name: 'General Fitness', desc: 'Move well, feel good, build energy.',
+  { id: 'general', name: L('General Fitness', 'Allgemeine Fitness'), desc: L('Move well, feel good, build energy.', 'Gut bewegen, gut fühlen, Energie aufbauen.'),
     pool: ['jumping-jack', 'squat', 'pushup', 'high-knees', 'glute-bridge', 'calf-raise', 'plank', 'mountain-climber'] },
 ];
 export const CAT = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+// Workout name in the current language (history entries store the name they were saved with).
+export const nameOf = w => CAT[w?.cat]?.name || w?.name || '';
 
 const LEVEL_KEY = { beginner: 'b', intermediate: 'i', advanced: 'a' };
 const LEGGY = new Set(['lower', 'football', 'full']);
@@ -148,10 +151,10 @@ export function todayRecommendation() {
   const streak = consecutiveDaysBefore(new Date());
   if (t.planned && streak >= 3) {
     return { kind: 'recover', cat: 'core', minutes: Math.max(10, Math.round(minutes / 2 / 5) * 5),
-      note: `${streak} days in a row. Go light today – recovery builds strength too.` };
+      note: L('{n} days in a row. Go light today – recovery builds strength too.', '{n} Tage am Stück. Heute locker – auch Erholung macht stark.', { n: streak }) };
   }
   if (t.planned) return { kind: 'train', cat: t.cat, minutes };
-  return { kind: 'rest', cat: 'general', minutes: 10, note: 'Rest day. Recover, stretch, stay active.' };
+  return { kind: 'rest', cat: 'general', minutes: 10, note: L('Rest day. Recover, stretch, stay active.', 'Ruhetag. Erholen, dehnen, aktiv bleiben.') };
 }
 
 export function nextPlanned(fromTomorrow = false) {

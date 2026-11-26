@@ -3,6 +3,7 @@ import { db } from '../store.js';
 import { EX } from '../data/exercises.js';
 import { weekDates } from './plan.js';
 import { startOfDay } from '../ui.js';
+import { L } from '../i18n.js';
 
 const DAY = 86400000;
 
@@ -78,5 +79,5 @@ export function records(list = db.history) {
 
 export const unit = (exId, n) => {
   const e = EX[exId];
-  return e?.type === 'time' ? `${n}s` : `${n} reps`;
+  return e?.type === 'time' ? `${n}s` : `${n} ${L('reps', 'Wdh.')}`;
 };

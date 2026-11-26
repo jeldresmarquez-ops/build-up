@@ -2,6 +2,7 @@
 import { db, save } from '../store.js';
 import { dayKey, weekdayIdx, toast } from '../ui.js';
 import { entriesOn } from './plan.js';
+import { L } from '../i18n.js';
 
 export const notificationsSupported = () => 'Notification' in window && 'serviceWorker' in navigator;
 
@@ -24,7 +25,7 @@ export function nextReminder(from = new Date()) {
   return null;
 }
 
-export const MESSAGE = 'Time to work on yourself.';
+export const MESSAGE = L('Time to work on yourself.', 'Zeit, an dir zu arbeiten.');
 
 async function fire() {
   const body = MESSAGE;
@@ -84,9 +85,9 @@ export function buildICS() {
     `DTSTART:${icsLocal(start)}`,
     `DURATION:PT${mins}M`,
     `RRULE:FREQ=WEEKLY;BYDAY=${[...r.days].sort().map(d => ICS_DAYS[d]).join(',')}`,
-    'SUMMARY:BUILD UP – Time to work on yourself.',
+    `SUMMARY:BUILD UP – ${MESSAGE}`,
     'DESCRIPTION:TRAIN. EAT. GROW. REPEAT.',
-    'BEGIN:VALARM', 'ACTION:DISPLAY', 'DESCRIPTION:BUILD UP – Time to work on yourself.', 'TRIGGER:PT0M', 'END:VALARM',
+    'BEGIN:VALARM', 'ACTION:DISPLAY', `DESCRIPTION:BUILD UP – ${MESSAGE}`, 'TRIGGER:PT0M', 'END:VALARM',
     'END:VEVENT', 'END:VCALENDAR',
   ].join('\r\n');
 }

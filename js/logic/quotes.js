@@ -1,5 +1,6 @@
 import { db, save, uid } from '../store.js';
 import { QUOTES } from '../data/quotes.js';
+import { L } from '../i18n.js';
 
 export function allQuotes() {
   return [...QUOTES.map((text, i) => ({ id: 'q' + (i + 1), text })), ...db.customQuotes];
@@ -42,10 +43,10 @@ export function dailyQuote() {
 
 export function addQuote(text) {
   const t = String(text || '').trim().replace(/\s+/g, ' ');
-  if (t.length < 4) return { ok: false, msg: 'Quote is too short.' };
-  if (t.length > 280) return { ok: false, msg: 'Keep it under 280 characters.' };
+  if (t.length < 4) return { ok: false, msg: L('Quote is too short.', 'Das Zitat ist zu kurz.') };
+  if (t.length > 280) return { ok: false, msg: L('Keep it under 280 characters.', 'Maximal 280 Zeichen.') };
   const n = norm(t);
-  if (allQuotes().some(q => norm(q.text) === n)) return { ok: false, msg: 'This quote is already in your collection.' };
+  if (allQuotes().some(q => norm(q.text) === n)) return { ok: false, msg: L('This quote is already in your collection.', 'Dieses Zitat ist schon in deiner Sammlung.') };
   const q = { id: 'c' + uid(), text: t, custom: true };
   db.customQuotes.push(q);
   const pos = Math.floor(Math.random() * (db.rotation.queue.length + 1));

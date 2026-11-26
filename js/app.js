@@ -1,5 +1,6 @@
 import { db } from './store.js';
 import { icon, applyAppearance } from './ui.js';
+import { L } from './i18n.js';
 import { setRenderer, currentPath } from './router.js';
 import * as story from './screens/story.js';
 import * as onboarding from './screens/onboarding.js';
@@ -34,11 +35,11 @@ const routes = [
 ];
 
 const TABS = [
-  ['home', 'home', 'Home'],
-  ['workout', 'workout', 'Workout'],
-  ['exercises', 'exercises', 'Exercises'],
+  ['home', 'home', L('Home', 'Start')],
+  ['workout', 'workout', L('Workout', 'Training')],
+  ['exercises', 'exercises', L('Exercises', 'Übungen')],
   ['food', 'food', 'Food'],
-  ['profile', 'profile', 'Profile'],
+  ['profile', 'profile', L('Profile', 'Profil')],
 ];
 
 function match(path) {
@@ -71,7 +72,7 @@ function render({ soft = false } = {}) {
     res = m.fn(m.params, new URLSearchParams(qs)) || { html: '' };
   } catch (err) {
     console.error(err);
-    res = { html: `<div class="empty mt-lg"><b>Something went wrong</b>This screen could not be shown.</div><a class="btn btn-primary btn-block" href="#/home">Back to home</a>` };
+    res = { html: `<div class="empty mt-lg"><b>${L('Something went wrong', 'Etwas ist schiefgelaufen')}</b>${L('This screen could not be shown.', 'Diese Seite konnte nicht angezeigt werden.')}</div><a class="btn btn-primary btn-block" href="#/home">${L('Back to home', 'Zurück zum Start')}</a>` };
   }
 
   const old = document.getElementById('view');

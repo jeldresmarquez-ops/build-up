@@ -20,7 +20,7 @@ const defaults = () => ({
   foods: [],
   pending: [],
   reminders: { enabled: false, time: '18:00', days: [0, 2, 4], lastFired: null, notify: false },
-  settings: { accent: 'electric', motion: true },
+  settings: { accent: 'electric', motion: true, lang: null },
 });
 
 function merge(p) {

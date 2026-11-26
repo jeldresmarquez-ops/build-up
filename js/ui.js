@@ -1,4 +1,5 @@
 import { db } from './store.js';
+import { L, lang, locale } from './i18n.js';
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => (
   { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -45,6 +46,7 @@ const P = {
   target: '<circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="4.5"/><circle cx="12" cy="12" r=".8" fill="currentColor"/>',
   phone: '<rect x="6.5" y="2.5" width="11" height="19" rx="2.5"/><path d="M10.5 18.5h3"/>',
   keyboard: '<rect x="2.5" y="6" width="19" height="12" rx="2.5"/><path d="M6 10h.1M9.5 10h.1M13 10h.1M16.5 10h1M6 14h12"/>',
+  globe: '<circle cx="12" cy="12" r="8.5"/><path d="M3.5 12h17M12 3.5c2.3 2.3 3.5 5.1 3.5 8.5s-1.2 6.2-3.5 8.5c-2.3-2.3-3.5-5.1-3.5-8.5s1.2-6.2 3.5-8.5Z"/>',
   more: '<circle cx="5.5" cy="12" r="1.3" fill="currentColor"/><circle cx="12" cy="12" r="1.3" fill="currentColor"/><circle cx="18.5" cy="12" r="1.3" fill="currentColor"/>',
 };
 
@@ -60,9 +62,9 @@ export const logo = (size = 'md') =>
   `<div class="logo logo-${size}">${logoMark}<span>BUILD UP</span></div>`;
 
 export const ACCENTS = {
-  electric: { name: 'Electric', color: '#4C7DFF', ink: '#FFFFFF' },
-  ice: { name: 'Ice', color: '#8FD3FF', ink: '#08131C' },
-  violet: { name: 'Violet', color: '#9D7CFF', ink: '#FFFFFF' },
+  electric: { name: L('Electric', 'Elektrisch'), color: '#4C7DFF', ink: '#FFFFFF' },
+  ice: { name: L('Ice', 'Eis'), color: '#8FD3FF', ink: '#08131C' },
+  violet: { name: L('Violet', 'Violett'), color: '#9D7CFF', ink: '#FFFFFF' },
   mono: { name: 'Mono', color: '#F4F4F5', ink: '#0A0A0B' },
 };
 
@@ -75,8 +77,10 @@ export function applyAppearance() {
 }
 
 // ---------- dates & formatting ----------
-export const DAYS = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-export const DAYS_LONG = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+export const DAYS = lang === 'de' ? ['Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'] : ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
+export const DAYS_LONG = lang === 'de'
+  ? ['Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag', 'Sonntag']
+  : ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
 export const weekdayIdx = (d = new Date()) => (new Date(d).getDay() + 6) % 7;
 export const dayKey = d => {
   const x = new Date(d);
@@ -86,7 +90,7 @@ export const startOfDay = (d = new Date()) => { const x = new Date(d); x.setHour
 
 export function greeting(name) {
   const h = new Date().getHours();
-  const part = h < 5 ? 'Good night' : h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+  const part = h < 5 ? L('Good night', 'Gute Nacht') : h < 11 ? L('Good morning', 'Guten Morgen') : h < 18 ? L('Good afternoon', 'Guten Tag') : L('Good evening', 'Guten Abend');
   return name ? `${part}, ${name}.` : `${part}.`;
 }
 
@@ -97,16 +101,16 @@ export function fmtDur(sec) {
 }
 export const fmtMin = sec => {
   const m = Math.round(sec / 60);
-  return m >= 60 ? `${Math.floor(m / 60)} h ${m % 60} min` : `${m} min`;
+  return m >= 60 ? `${Math.floor(m / 60)} ${L('h', 'Std.')} ${m % 60} min` : `${m} min`;
 };
 export function fmtDate(ts, opts = { weekday: 'short', day: 'numeric', month: 'short' }) {
-  return new Date(ts).toLocaleDateString('en-GB', opts);
+  return new Date(ts).toLocaleDateString(locale, opts);
 }
 export function relDay(ts) {
   const diff = Math.round((startOfDay() - startOfDay(ts)) / 86400000);
-  if (diff === 0) return 'Today';
-  if (diff === 1) return 'Yesterday';
-  if (diff < 7) return `${diff} days ago`;
+  if (diff === 0) return L('Today', 'Heute');
+  if (diff === 1) return L('Yesterday', 'Gestern');
+  if (diff < 7) return L('{n} days ago', 'vor {n} Tagen', { n: diff });
   return fmtDate(ts);
 }
 
@@ -122,7 +126,7 @@ export function ring(pct, { size = 64, stroke = 6, label = '' } = {}) {
 }
 
 export const backBar = (href, title = '', right = '') => `<header class="topbar">
-  <a class="icon-btn" href="${href}" aria-label="Back">${icon('left')}</a>
+  <a class="icon-btn" href="${href}" aria-label="${L('Back', 'Zurück')}">${icon('left')}</a>
   <h2 class="topbar-title">${esc(title)}</h2><div class="topbar-right">${right}</div></header>`;
 
 export function toast(msg) {
@@ -149,7 +153,7 @@ export function sheet(html, { onMount, cls = '' } = {}) {
   return close;
 }
 
-export function confirmDialog({ title, text = '', confirm = 'Confirm', cancel = 'Cancel', danger = false }) {
+export function confirmDialog({ title, text = '', confirm = L('Confirm', 'Bestätigen'), cancel = L('Cancel', 'Abbrechen'), danger = false }) {
   return new Promise(resolve => {
     let answered = false;
     const close = sheet(`<h3 class="sheet-title">${esc(title)}</h3>${text ? `<p class="muted">${esc(text)}</p>` : ''}

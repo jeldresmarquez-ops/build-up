@@ -1,14 +1,15 @@
+import { lang } from '../i18n.js';
+import { EXERCISES_DE, MUSCLES_DE } from './exercises-de.js';
+
 // BUILD UP exercise library.
 // dose: [sets, reps or seconds] per level (b = beginner, i = intermediate, a = advanced)
 // video: set to a file path (e.g. 'media/exercises/pushup.mp4') once a real video exists.
-export const AREAS = {
-  upper: 'Upper Body',
-  lower: 'Lower Body',
-  core: 'Core',
-  cardio: 'Conditioning',
-};
+const DE = lang === 'de';
+export const AREAS = DE
+  ? { upper: 'Oberkörper', lower: 'Unterkörper', core: 'Rumpf', cardio: 'Kondition' }
+  : { upper: 'Upper Body', lower: 'Lower Body', core: 'Core', cardio: 'Conditioning' };
 
-export const DIFFICULTY = ['', 'Easy', 'Medium', 'Hard'];
+export const DIFFICULTY = DE ? ['', 'Leicht', 'Mittel', 'Schwer'] : ['', 'Easy', 'Medium', 'Hard'];
 
 export const EXERCISES = [
   {
@@ -267,5 +268,12 @@ export const EXERCISES = [
     video: null,
   },
 ];
+
+if (DE) {
+  for (const e of EXERCISES) {
+    Object.assign(e, EXERCISES_DE[e.id] || {});
+    e.muscles = e.muscles.map(m => MUSCLES_DE[m] || m);
+  }
+}
 
 export const EX = Object.fromEntries(EXERCISES.map(e => [e.id, e]));
