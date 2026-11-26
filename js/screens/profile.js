@@ -1,6 +1,7 @@
 import { db, save } from '../store.js';
 import { esc, icon, backBar, toast, DAYS, isStandalone } from '../ui.js';
-import { L, lang } from '../i18n.js';
+import { L, lang, setLang } from '../i18n.js';
+import { VERSION } from './settings.js';
 import { GOALS, AREAS_TO_IMPROVE, EXPERIENCE, MINUTES, label } from '../data/options.js';
 import { EXERCISES, EX } from '../data/exercises.js';
 import { defaultDays } from '../logic/plan.js';
@@ -24,6 +25,8 @@ export function render() {
         <div class="avatar avatar-lg">${esc((p.name || 'A')[0].toUpperCase())}</div>
         <div class="grow"><p class="h3" style="font-size:20px">${esc(p.name || 'Athlete')}</p><p class="muted small">${esc(meta)}</p></div>
         <a class="icon-btn" href="#/profile/edit" aria-label="${L('Edit profile', 'Profil bearbeiten')}">${icon('edit')}</a></div>
+      <div class="card card-tight"><div class="row-flex" style="margin-bottom:10px">${icon('globe', 'ic-sm')}<span class="row-title">Sprache / Language</span></div>
+        <div class="seg"><button type="button" class="${lang === 'de' ? 'on' : ''}" data-lang="de">Deutsch</button><button type="button" class="${lang === 'en' ? 'on' : ''}" data-lang="en">English</button></div></div>
       ${!isStandalone() ? `<div class="callout">${icon('phone')}<span><b style="color:var(--text)">${L('Install BUILD UP:', 'BUILD UP installieren:')}</b> ${ios
         ? L('tap the Share button in Safari, then “Add to Home Screen”.', 'tippe in Safari auf „Teilen“ und dann auf „Zum Home-Bildschirm“.')
         : L('open the browser menu and choose “Install app” or “Add to Home screen”.', 'öffne das Browser-Menü und wähle „App installieren“ oder „Zum Startbildschirm hinzufügen“.')}</span></div>` : ''}
@@ -47,7 +50,14 @@ export function render() {
         ${menu('#/profile/edit', 'edit', L('Edit profile', 'Profil bearbeiten'))}
         ${menu('#/settings/data', 'data', L('Data management', 'Datenverwaltung'), L('Backup, reset, delete', 'Sichern, zurücksetzen, löschen'))}
         ${menu('#/settings/about', 'info', L('About BUILD UP', 'Über BUILD UP'))}
-      </div></div>`,
+      </div></div>
+      <p class="note center">BUILD UP · Version ${VERSION}</p>`,
+    mount(view) {
+      view.addEventListener('click', e => {
+        const b = e.target.closest('[data-lang]');
+        if (b && b.dataset.lang !== lang) setLang(b.dataset.lang);
+      });
+    },
   };
 }
 

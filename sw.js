@@ -1,5 +1,5 @@
 // BUILD UP service worker – offline support.
-const VERSION = 'buildup-v1.1.0';
+const VERSION = 'buildup-v1.2.0';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/i18n.js', 'js/store.js', 'js/ui.js', 'js/router.js',
@@ -27,7 +27,7 @@ function networkFirst(req) {
     let done = false;
     const fallback = () => caches.match(req, { ignoreSearch: true }).then(r => r || caches.match('index.html'));
     const timer = setTimeout(() => { if (!done) fallback().then(r => { if (r && !done) { done = true; resolve(r); } }); }, 3500);
-    fetch(req).then(res => {
+    fetch(req, { cache: 'no-cache' }).then(res => {
       if (res && res.ok) {
         const copy = res.clone();
         caches.open(VERSION).then(c => c.put(req, copy));
