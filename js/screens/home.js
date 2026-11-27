@@ -1,7 +1,7 @@
 import { db } from '../store.js';
 import { esc, icon, logo, greeting, ring, fmtMin, relDay, DAYS_LONG, weekdayIdx, fmtDate } from '../ui.js';
 import { L } from '../i18n.js';
-import { todayRecommendation, buildWorkout, nextPlanned, nameOf } from '../logic/plan.js';
+import { todayRecommendation, buildWorkout, nextPlanned, nameOf, activeSick, sickDaysLeft } from '../logic/plan.js';
 import { weekCount, weekStreak, totals } from '../logic/stats.js';
 import { dailyQuote } from '../logic/quotes.js';
 import { nextReminder, dueToday } from '../logic/reminders.js';
@@ -25,8 +25,14 @@ function todayCard() {
       <div class="hero-meta"><span>${icon('check')}${esc(nameOf(r.entry))}</span><span>${icon('clock')}${fmtMin(r.entry.dur)}</span></div></div>
       <p class="muted small mt">${L('Recovery starts now. Eat well, sleep well.', 'Jetzt beginnt die Erholung. Gut essen, gut schlafen.')}</p></div>`;
   }
+  if (r.kind === 'sickrest') {
+    return `<div class="card hero">
+      <div><p class="eyebrow">${L('Sick mode', 'Krank-Modus')}</p><h2 class="h1 mt-sm">${L('Rest &amp;<br>get well', 'Ruhe &amp;<br>gesund werden')}</h2>
+      <p class="muted small mt-sm">${esc(r.note)}</p></div>
+      <a class="btn btn-ghost btn-block mt" href="#/sick">${L('Open sick mode', 'Krank-Modus öffnen')}</a></div>`;
+  }
   const w = buildWorkout(r.cat, db.profile, r.minutes);
-  const lbl = r.kind === 'rest' ? L('Rest day', 'Ruhetag') : r.kind === 'recover' ? L('Recovery', 'Erholung') : L('Today’s workout', 'Heutiges Training');
+  const lbl = r.kind === 'sick' ? L('Sick mode', 'Krank-Modus') : r.kind === 'rest' ? L('Rest day', 'Ruhetag') : r.kind === 'recover' ? L('Recovery', 'Erholung') : L('Today’s workout', 'Heutiges Training');
   const title = r.kind === 'rest' ? L('Rest &amp;<br>recover', 'Ruhen &amp;<br>erholen') : esc(w.name);
   return `<div class="card hero">
     <div><p class="eyebrow">${lbl}</p><h2 class="h1 mt-sm">${title}</h2>
@@ -41,6 +47,22 @@ function todayCard() {
         : `<button class="btn btn-primary grow" data-start="${w.cat}" data-min="${r.minutes}">${icon('play', 'ic-sm')} ${L('Start workout', 'Training starten')}</button>
            <a class="btn btn-ghost" href="#/workout/c/${w.cat}?m=${r.minutes}">${L('Details', 'Details')}</a>`}
     </div></div>`;
+}
+
+function sickRow() {
+  const s = activeSick();
+  if (s) {
+    const n = sickDaysLeft();
+    return `<a class="card card-tight row-flex" href="#/sick" style="border-color:var(--accent)">
+      <div class="row-icon">${icon('shield')}</div>
+      <div class="grow"><p class="tiny muted">${L('Sick mode active', 'Krank-Modus aktiv')}</p>
+        <p class="row-title">${n ? L('{n} adjusted training days left', 'Noch {n} angepasste Trainingstage', { n }) : L('Feeling better?', 'Geht’s dir besser?')}</p></div>
+      ${icon('right', 'chev')}</a>`;
+  }
+  return `<a class="card card-tight row-flex" href="#/sick">
+    <div class="row-icon">${icon('shield')}</div>
+    <div class="grow"><p class="row-title">${L('Feeling sick?', 'Krank?')}</p><p class="row-sub">${L('Get an easy plan for 2 training days', 'Einfacher Plan für 2 Trainingstage')}</p></div>
+    ${icon('right', 'chev')}</a>`;
 }
 
 export function render() {
@@ -60,6 +82,7 @@ export function render() {
       <h1 class="greet mt-sm">${esc(greeting(p.name))}</h1></div>
     ${due && due > new Date() ? `<a class="callout" href="#/settings/reminders">${icon('bell')}<span>${L('Training today at <b>{t}</b>. Time to work on yourself.', 'Heute Training um <b>{t}</b>. Zeit, an dir zu arbeiten.', { t: due.toTimeString().slice(0, 5) })}</span></a>` : ''}
     ${todayCard()}
+    ${sickRow()}
     <div class="grid2">
       <a class="card tile" href="#/exercises">${icon('exercises')}<div><div class="tile-title">${L('Exercise library', 'Übungen')}</div><div class="tile-sub">${L('{n} exercises', '{n} Übungen', { n: Object.keys(EX).length })}</div></div></a>
       <a class="card tile" href="#/food">${icon('scan')}<div><div class="tile-title">${L('Food scanner', 'Food-Scanner')}</div><div class="tile-sub">${L('Scan a barcode', 'Barcode scannen')}</div></div></a>

@@ -1,7 +1,7 @@
 import { db, save } from '../store.js';
 import { esc, icon, DAYS, DAYS_LONG, fmtMin, fmtDate, backBar, sheet, toast, confirmDialog } from '../ui.js';
 import { L } from '../i18n.js';
-import { CATEGORIES, CAT, buildWorkout, weekPlan, nameOf } from '../logic/plan.js';
+import { CATEGORIES, CAT, buildWorkout, weekPlan, nameOf, activeSick } from '../logic/plan.js';
 import { startSession, logManual, deleteEntry } from '../logic/session.js';
 import { MINUTES, EXPERIENCE, label } from '../data/options.js';
 import { EX } from '../data/exercises.js';
@@ -12,7 +12,8 @@ let weekOffset = 0;
 const doseText = it => {
   const e = EX[it.exId];
   const amount = e.type === 'time' ? `${it.target}s` : `${it.target} ${L('reps', 'Wdh.')}`;
-  return `${it.sets} × ${amount}${e.perSide ? ' ' + L('each side', 'pro Seite') : ''}`;
+  const normal = it.normal ? ` · ${L('normally', 'sonst')} ${it.normal[0]} × ${e.type === 'time' ? it.normal[1] + 's' : it.normal[1]}` : '';
+  return `${it.sets} × ${amount}${e.perSide ? ' ' + L('each side', 'pro Seite') : ''}${normal}`;
 };
 
 function weekStrip(plan) {
@@ -54,6 +55,11 @@ export function render() {
           ${icon('right', 'chev')}</button>`;
       }).join('') || `<p class="muted small" style="padding:14px 0">${L('No sessions this week.', 'Keine Trainings in dieser Woche.')}</p>`}</div>
     </div>
+    <a class="card card-tight row-flex" href="#/sick" ${activeSick() ? 'style="border-color:var(--accent)"' : ''}>
+      <div class="row-icon">${icon('shield')}</div>
+      <div class="grow"><p class="row-title">${activeSick() ? L('Sick mode active', 'Krank-Modus aktiv') : L('Feeling sick?', 'Krank?')}</p>
+        <p class="row-sub wrap">${activeSick() ? L('Your plan is adjusted – tap for details', 'Dein Plan ist angepasst – tippen für Details') : L('Easy plan for your next 2 training days', 'Einfacher Plan für deine nächsten 2 Trainingstage')}</p></div>
+      ${icon('right', 'chev')}</a>
     <div class="grid2">
       <button class="card card-tight" data-edit-days><p class="tiny muted">${L('Training days', 'Trainingstage')}</p><p class="row-title mt-sm">${db.planDays.length ? [...db.planDays].sort().map(d => DAYS[d]).join(' · ') : L('None', 'Keine')}</p></button>
       <button class="card card-tight" data-edit-time><p class="tiny muted">${L('Session length', 'Trainingsdauer')}</p><p class="row-title mt-sm">${db.profile.minutes} min</p></button>
@@ -175,11 +181,11 @@ export function preview({ id }, query) {
   const w = buildWorkout(cat.id, db.profile, minutes);
   const html = `${backBar('#/workout', '')}
     <div><p class="eyebrow">${label(EXPERIENCE, w.level)} · ${L('{n} exercises', '{n} Übungen', { n: w.items.length })}</p><h1 class="h1 mt-sm">${cat.name}</h1><p class="muted mt-sm">${esc(cat.desc)}</p></div>
-    <div><p class="eyebrow">${L('Duration', 'Dauer')}</p><div class="chips scroll mt-sm">${MINUTES.map(m => `<a class="chip ${m === minutes ? 'on' : ''}" href="#/workout/c/${cat.id}?m=${m}">${m} min</a>`).join('')}</div>
-      <p class="note mt-sm">${L('Estimated {t} including rest.', 'Etwa {t} inklusive Pausen.', { t: fmtMin(w.seconds) })}</p></div>
+    ${cat.light ? `<div class="callout">${icon('shield')}<span>${L('Sick mode plan: about half the reps, more rest. Stop if you feel worse.', 'Krank-Modus-Plan: etwa halbe Wiederholungen, mehr Pause. Hör auf, wenn es dir schlechter geht.')}</span></div>` : `<div><p class="eyebrow">${L('Duration', 'Dauer')}</p><div class="chips scroll mt-sm">${MINUTES.map(m => `<a class="chip ${m === minutes ? 'on' : ''}" href="#/workout/c/${cat.id}?m=${m}">${m} min</a>`).join('')}</div>
+      <p class="note mt-sm">${L('Estimated {t} including rest.', 'Etwa {t} inklusive Pausen.', { t: fmtMin(w.seconds) })}</p></div>`}
     <div class="card list-card">${w.items.map((it, k) => `<a class="row" href="#/exercises/${it.exId}">
         <div class="row-icon num" style="font-size:17px">${k + 1}</div>
-        <div class="grow"><div class="row-title">${EX[it.exId].name}</div><div class="row-sub">${doseText(it)} · ${L('rest', 'Pause')} ${it.rest}s</div></div>
+        <div class="grow"><div class="row-title">${EX[it.exId].name}</div><div class="row-sub wrap">${doseText(it)} · ${L('rest', 'Pause')} ${it.rest}s</div></div>
         ${icon('right', 'chev')}</a>`).join('')}</div>
     <div class="callout">${icon('info')}<span>${L('Warm up for a few minutes first. Stop if you feel pain – adjust reps to your level.', 'Wärm dich vorher ein paar Minuten auf. Hör bei Schmerzen auf – pass die Wiederholungen deinem Level an.')}</span></div>
     <button class="btn btn-primary btn-block btn-xl" data-start>${db.session ? L('Start new workout', 'Neues Training starten') : L('Start workout', 'Training starten')}</button>`;

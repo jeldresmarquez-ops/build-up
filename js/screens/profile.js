@@ -40,6 +40,7 @@ export function render() {
       </div>
       <div class="card list-card">
         ${menu('#/motivation', 'quote', L('Motivation', 'Motivation'), L('Quotes, favourites and reminders', 'Zitate, Favoriten und Impulse'))}
+        ${menu('#/sick', 'shield', L('Sick mode', 'Krank-Modus'), L('Easy plan when you are sick', 'Einfacher Plan, wenn du krank bist'))}
         ${menu('#/progress', 'chart', L('Progress', 'Fortschritt'))}
         ${menu('#/history', 'history', L('Workout history', 'Trainingsverlauf'))}
       </div>

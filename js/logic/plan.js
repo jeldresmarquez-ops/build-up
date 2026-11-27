@@ -1,5 +1,5 @@
 // Workout generation and weekly planning.
-import { db } from '../store.js';
+import { db, save } from '../store.js';
 import { EX } from '../data/exercises.js';
 import { dayKey, startOfDay, weekdayIdx } from '../ui.js';
 import { L } from '../i18n.js';
@@ -20,7 +20,15 @@ export const CATEGORIES = [
   { id: 'general', name: L('General Fitness', 'Allgemeine Fitness'), desc: L('Move well, feel good, build energy.', 'Gut bewegen, gut fühlen, Energie aufbauen.'),
     pool: ['jumping-jack', 'squat', 'pushup', 'high-knees', 'glute-bridge', 'calf-raise', 'plank', 'mountain-climber'] },
 ];
-export const CAT = Object.fromEntries(CATEGORIES.map(c => [c.id, c]));
+// Gentle session for sick days (not shown in the normal workout list).
+export const LIGHT = {
+  id: 'light', light: true,
+  name: L('Gentle session', 'Sanftes Training'),
+  desc: L('Half the reps, fewer sets, more rest and no jumping – to stay fit while you are a bit sick.',
+    'Halbe Wiederholungen, weniger Sätze, mehr Pause und keine Sprünge – um fit zu bleiben, wenn du angeschlagen bist.'),
+  pool: ['squat', 'incline-pushup', 'pushup', 'glute-bridge', 'calf-raise', 'superman', 'plank', 'crunch', 'side-plank'],
+};
+export const CAT = Object.fromEntries([...CATEGORIES, LIGHT].map(c => [c.id, c]));
 // Workout name in the current language (history entries store the name they were saved with).
 export const nameOf = w => CAT[w?.cat]?.name || w?.name || '';
 
@@ -40,6 +48,7 @@ export function buildWorkout(catId, profile = db.profile, minutes) {
   const cat = CAT[catId] || CAT.full;
   const level = cat.level || profile.experience || 'beginner';
   const key = LEVEL_KEY[level] || 'b';
+  if (cat.light) return buildLight(cat, profile, level, key);
   const budget = (minutes || profile.minutes || 20) * 60;
   const pref = new Set(profile.preferred || []);
 
@@ -78,6 +87,68 @@ export function buildWorkout(catId, profile = db.profile, minutes) {
   chosen.sort((a, b) => order.indexOf(a.exId) - order.indexOf(b.exId));
   return { cat: cat.id, name: cat.name, level, items: chosen, seconds: total };
 }
+
+// Sick-day version: about half the reps, 1–2 sets, +30 s rest, only calm exercises.
+function buildLight(cat, profile, level, key) {
+  const pref = new Set(profile.preferred || []);
+  const pool = cat.pool
+    .filter(id => (level === 'beginner' ? id !== 'pushup' : id !== 'incline-pushup'))
+    .map(id => EX[id]).filter(Boolean);
+  const ranked = [...pool.filter(e => pref.has(e.id)), ...pool.filter(e => !pref.has(e.id))].slice(0, 4);
+  const items = ranked.map(e => {
+    const [sets, target] = e.dose[key];
+    const t = e.type === 'time' ? Math.max(10, Math.round((target * 0.5) / 5) * 5) : Math.max(3, Math.round(target * 0.5));
+    return { exId: e.id, sets: level === 'beginner' ? 1 : 2, target: t, rest: e.rest + 30, normal: [sets, target] };
+  });
+  items.sort((a, b) => cat.pool.indexOf(a.exId) - cat.pool.indexOf(b.exId));
+  return { cat: cat.id, name: cat.name, level, items, seconds: workoutSeconds(items), light: true };
+}
+
+// ---------- sick mode ----------
+// db.sick = { since, severity: 'mild' | 'severe', days: ['YYYY-MM-DD', …] } – the next 2 training days.
+function nextTrainingDayKeys(n = 2) {
+  const out = [];
+  const now = new Date();
+  const days = db.planDays.length ? db.planDays : [0, 1, 2, 3, 4, 5, 6];
+  for (let i = 0; i < 21 && out.length < n; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+    const k = dayKey(d);
+    if (!days.includes(weekdayIdx(d))) continue;
+    if (i === 0 && entriesOn(k).length) continue; // already trained today
+    out.push(k);
+  }
+  return out;
+}
+
+export function activeSick() {
+  const s = db.sick;
+  if (!s || !s.days?.length) return null;
+  const today = dayKey(Date.now());
+  if (s.days.every(k => k < today)) { db.sick = null; save(); return null; }
+  return s;
+}
+export function startSick(severity) {
+  db.sick = { since: Date.now(), severity, days: nextTrainingDayKeys(2) };
+  save();
+  return db.sick;
+}
+export function setSickSeverity(severity) {
+  if (db.sick) { db.sick.severity = severity; save(); }
+}
+// Still sick: restart with the next 2 training days from today.
+export function extendSick() {
+  if (!db.sick) return;
+  db.sick.days = nextTrainingDayKeys(2);
+  db.sick.since = Date.now();
+  save();
+}
+export function endSick() { db.sick = null; save(); }
+export const sickDaysLeft = () => {
+  const s = activeSick();
+  if (!s) return 0;
+  const today = dayKey(Date.now());
+  return s.days.filter(k => k > today || (k === today && !entriesOn(k).length)).length;
+};
 
 export function defaultDays(n) {
   return ({ 1: [2], 2: [1, 4], 3: [0, 2, 4], 4: [0, 1, 3, 4], 5: [0, 1, 2, 4, 5], 6: [0, 1, 2, 3, 4, 5] })[n] || [0, 2, 4];
@@ -120,13 +191,15 @@ export function weekPlan(offset = 0) {
   const days = [...db.planDays].sort((a, b) => a - b);
   const todayKey = dayKey(Date.now());
   const today0 = startOfDay().getTime();
+  const sick = activeSick();
   return dates.map((date, i) => {
     const key = dayKey(date);
     const pos = days.indexOf(i);
+    const sickDay = !!sick?.days.includes(key);
     return {
-      idx: i, date, key,
-      planned: pos >= 0,
-      cat: pos >= 0 ? cyc[pos % cyc.length] : null,
+      idx: i, date, key, sickDay,
+      planned: sickDay ? sick.severity === 'mild' : pos >= 0,
+      cat: sickDay ? (sick.severity === 'mild' ? 'light' : null) : pos >= 0 ? cyc[pos % cyc.length] : null,
       entries: entriesOn(key),
       isToday: key === todayKey,
       past: date.getTime() < today0,
@@ -148,6 +221,11 @@ export function todayRecommendation() {
   const t = weekPlan()[weekdayIdx()];
   const minutes = db.profile.minutes || 20;
   if (t.entries.length) return { kind: 'done', day: t, entry: t.entries[t.entries.length - 1] };
+  if (t.sickDay) {
+    return activeSick().severity === 'mild'
+      ? { kind: 'sick', cat: 'light', minutes: 10, note: L('Sick mode: half the reps, more rest. Stop if you feel worse.', 'Krank-Modus: halbe Wiederholungen, mehr Pause. Hör auf, wenn es dir schlechter geht.') }
+      : { kind: 'sickrest', note: L('Sick mode: rest today. Drink plenty and sleep – that is your training.', 'Krank-Modus: Heute Ruhe. Viel trinken und schlafen – das ist heute dein Training.') };
+  }
   const streak = consecutiveDaysBefore(new Date());
   if (t.planned && streak >= 3) {
     return { kind: 'recover', cat: 'core', minutes: Math.max(10, Math.round(minutes / 2 / 5) * 5),

@@ -13,6 +13,7 @@ const defaults = () => ({
   planDays: [0, 2, 4], // 0 = Monday … 6 = Sunday
   history: [],
   session: null,
+  sick: null,
   favExercises: [],
   customQuotes: [],
   favQuotes: [],

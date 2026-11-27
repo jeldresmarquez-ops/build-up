@@ -14,6 +14,7 @@ import * as progress from './screens/progress.js';
 import * as motivation from './screens/motivation.js';
 import * as profile from './screens/profile.js';
 import * as settings from './screens/settings.js';
+import * as sick from './screens/sick.js';
 import { startLoop } from './logic/reminders.js';
 
 const routes = [
@@ -22,6 +23,7 @@ const routes = [
   ['workout/c/:id', workout.preview, 'workout'],
   ['workout/done/:id', session.summary, 'workout'],
   ['session', session.render, null],
+  ['sick', sick.render, 'workout'],
   ['progress', progress.render, 'workout'],
   ['history', progress.history, 'workout'],
   ['exercises', exercises.list, 'exercises'],
