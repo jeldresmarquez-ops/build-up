@@ -50,7 +50,7 @@ export function render() {
         return `<button class="row" data-day="${d.idx}">
           <div class="row-icon">${e ? icon('check') : icon('workout')}</div>
           <div class="grow"><div class="row-title">${esc(e ? nameOf(e) : CAT[d.cat].name)}</div>
-          <div class="row-sub">${DAYS_LONG[d.idx]}${d.isToday ? ' · ' + L('Today', 'Heute') : ''}${e ? ` · ${fmtMin(e.dur)}` : d.past ? ' · ' + L('Missed – that’s okay', 'Verpasst – das ist okay') : ''}</div></div>
+          <div class="row-sub wrap">${DAYS_LONG[d.idx]}${d.isToday ? ' · ' + L('Today', 'Heute') : ''}${e ? ` · ${fmtMin(e.dur)}` : d.past ? ' · ' + L('Missed – that’s okay', 'Verpasst – das ist okay') : ''}</div></div>
           ${icon('right', 'chev')}</button>`;
       }).join('') || `<p class="muted small" style="padding:14px 0">${L('No sessions this week.', 'Keine Trainings in dieser Woche.')}</p>`}</div>
     </div>

@@ -406,3 +406,17 @@ a.card.row-flex, button.card.row-flex, a.card.between, button.card.between { dis
 .view > * + * { margin-top: 16px; }
 .view > .topbar + * { margin-top: 0; }
 [hidden] { display: none !important; }
+/* Mobile check fixes: buttons may wrap instead of cutting text on small phones */
+.btn { height: auto; min-height: 52px; padding-top: 10px; padding-bottom: 10px; white-space: normal; text-align: center; line-height: 1.2; min-width: 0; }
+.btn-sm { min-height: 40px; padding-top: 8px; padding-bottom: 8px; }
+.btn-xl { min-height: 60px; }
+.btn-round { height: 56px; min-height: 0; padding: 0; }
+.session-actions .between { gap: 4px; }
+.session-actions .link-btn { font-size: 13px; white-space: nowrap; display: inline-flex; align-items: center; gap: 4px; }
+.row-sub.wrap { white-space: normal; }
+@media (max-width: 360px) {
+  .view { padding-left: 16px; padding-right: 16px; }
+  .btn { padding-left: 16px; padding-right: 16px; }
+  .hero { padding: 18px; }
+  .chips.scroll { margin: 0 -16px; padding: 0 16px 2px; }
+}
