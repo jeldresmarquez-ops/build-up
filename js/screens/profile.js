@@ -1,5 +1,6 @@
 import { db, save } from '../store.js';
-import { esc, icon, backBar, toast, DAYS, isStandalone } from '../ui.js';
+import { esc, icon, backBar, toast, DAYS, isStandalone, sheet } from '../ui.js';
+import { latestVersion, isNewer, applyUpdate } from '../logic/update.js';
 import { L, lang, setLang } from '../i18n.js';
 import { VERSION } from './settings.js';
 import { GOALS, AREAS_TO_IMPROVE, EXPERIENCE, MINUTES, label } from '../data/options.js';
@@ -52,10 +53,13 @@ export function render() {
         ${menu('#/profile/edit', 'edit', L('Edit profile', 'Profil bearbeiten'))}
         ${menu('#/settings/data', 'data', L('Data management', 'Datenverwaltung'), L('Backup, reset, delete', 'Sichern, zurücksetzen, löschen'))}
         ${menu('#/settings/about', 'info', L('About BUILD UP', 'Über BUILD UP'))}
+        <button class="row" data-update><div class="row-icon">${icon('refresh')}</div>
+          <div class="grow"><div class="row-title">${L('Check for updates', 'Nach Updates suchen')}</div><div class="row-sub">${L('Installed', 'Installiert')}: Version ${VERSION}</div></div>${icon('right', 'chev')}</button>
       </div></div>
       <p class="note center">BUILD UP · Version ${VERSION}</p>`,
     mount(view) {
       view.addEventListener('click', async e => {
+        if (e.target.closest('[data-update]')) { checkForUpdate(); return; }
         const b = e.target.closest('[data-lang]');
         if (b && b.dataset.lang !== lang) setLang(b.dataset.lang);
         if (e.target.closest('[data-install]') && window.__bpInstall) {
@@ -137,4 +141,37 @@ export function edit() {
       });
     },
   };
+}
+
+// ---------- update ----------
+function checkForUpdate() {
+  sheet(`<div data-box><h3 class="sheet-title">${L('Checking for updates…', 'Suche nach Updates…')}</h3>
+    <div class="skeleton mt" style="height:52px"></div></div>`, {
+    async onMount(el, close) {
+      const box = el.querySelector('[data-box]');
+      let latest;
+      try { latest = await latestVersion(); } catch {
+        box.innerHTML = `<h3 class="sheet-title">${L('No connection', 'Keine Verbindung')}</h3>
+          <p class="muted">${L('Connect to the internet and try again.', 'Verbinde dich mit dem Internet und versuche es nochmal.')}</p>
+          <button class="btn btn-ghost btn-block mt" data-close>${L('OK', 'OK')}</button>`;
+        return;
+      }
+      const newer = isNewer(latest, VERSION);
+      box.innerHTML = newer
+        ? `<h3 class="sheet-title">${L('Update available', 'Update verfügbar')}</h3>
+          <p class="muted">Version ${VERSION} → <b style="color:var(--text)">Version ${latest}</b></p>
+          <p class="note mt-sm">${L('The app restarts briefly. Your data stays safe.', 'Die App startet kurz neu. Deine Daten bleiben erhalten.')}</p>
+          <button class="btn btn-primary btn-block btn-xl mt" data-apply>${icon('download', 'ic-sm')} ${L('Update now', 'Jetzt aktualisieren')}</button>
+          <button class="btn btn-ghost btn-block mt-sm" data-close>${L('Later', 'Später')}</button>`
+        : `<h3 class="sheet-title">${L('You are up to date', 'Alles aktuell')}</h3>
+          <p class="muted">${L('You have the newest version', 'Du hast die neueste Version')}: <b style="color:var(--text)">${VERSION}</b></p>
+          <button class="btn btn-primary btn-block mt" data-close>${L('OK', 'OK')}</button>
+          <button class="btn btn-ghost btn-block mt-sm" data-apply>${L('Restart app anyway', 'App trotzdem neu laden')}</button>`;
+      box.querySelector('[data-apply]')?.addEventListener('click', () => {
+        box.innerHTML = `<h3 class="sheet-title">${L('Updating…', 'Wird aktualisiert…')}</h3><div class="skeleton mt" style="height:52px"></div>`;
+        applyUpdate();
+      });
+      void close;
+    },
+  });
 }

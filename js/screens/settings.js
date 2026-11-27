@@ -4,7 +4,7 @@ import { L, lang, setLang } from '../i18n.js';
 import { askPermission, notificationsSupported, nextReminder, buildICS, MESSAGE } from '../logic/reminders.js';
 import { refresh } from '../router.js';
 
-export const VERSION = '1.4.2';
+export const VERSION = '1.5.0';
 
 export function render({ page }) {
   const fn = { language, reminders, appearance, data, about }[page];
