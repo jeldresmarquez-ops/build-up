@@ -420,3 +420,17 @@ a.card.row-flex, button.card.row-flex, a.card.between, button.card.between { dis
   .hero { padding: 18px; }
   .chips.scroll { margin: 0 -16px; padding: 0 16px 2px; }
 }
+/* Full mobile check: easier tapping in the quote list */
+.qrow > button.grow { min-height: 44px; display: flex; align-items: center; }
+.qrow .icon-btn { width: 44px !important; height: 44px !important; margin: -5px -6px; }
+/* Phone turned sideways: keep the workout player on one screen */
+@media (max-height: 500px) {
+  .session-main { padding: 4px 0; }
+  .session-name { font-size: 26px; }
+  .session-big { font-size: 64px; margin: 4px 0 0; }
+  .stepper { margin-top: 8px; }
+  .stepper button { width: 44px; height: 44px; }
+  .btn-xl { min-height: 48px; }
+  .session-actions { gap: 6px; }
+  .session-next { margin-bottom: 6px; padding: 10px 14px; }
+}
