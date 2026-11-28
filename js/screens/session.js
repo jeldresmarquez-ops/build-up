@@ -62,7 +62,7 @@ export function render() {
       main = `<p class="eyebrow">${L('Exercise done', 'Übung geschafft')}</p>
         <h1 class="session-name mt-sm">${e.name}</h1>
         <p class="muted mt">${L('How was it for you?', 'Wie war es für dich?')}</p>`;
-      actions = `<div>${fb('easy', '💪', RATING.easy(), moreText)}
+      actions = `<div class="fb-list">${fb('easy', '💪', RATING.easy(), moreText)}
         ${fb('hard', '😤', RATING.hard(), L('Stays the same', 'Bleibt gleich'))}
         ${fb('help', '🤝', RATING.help(), L('Stays the same', 'Bleibt gleich'))}</div>`;
     } else if (s.phase === 'rest') {
@@ -97,7 +97,7 @@ export function render() {
     }
     view.innerHTML = `<div class="session">
       <div class="session-top">
-        <button class="icon-btn" data-act="leave" aria-label="${L('Leave', 'Verlassen')}">${icon('x')}</button>
+        <button class="abort-btn" data-act="abort">${icon('x', 'ic-sm')} ${L('Cancel', 'Abbrechen')}</button>
         <span class="session-clock" data-t="clock">${fmtDur(S.elapsed(s) / 1000)}</span>
         <button class="icon-btn" data-act="pause" aria-label="${L('Pause', 'Pause')}">${icon('pause')}</button>
       </div>
@@ -106,10 +106,10 @@ export function render() {
       <div class="session-actions">${actions}
         <div class="between" ${s.phase === 'feedback' ? 'hidden' : ''}><button class="link-btn" data-act="how">${icon('info', 'ic-sm')} ${L('How to', 'Anleitung')}</button>
           <button class="link-btn" data-act="skip-ex">${L('Skip exercise', 'Übung überspringen')}</button>
-          <button class="link-btn" data-act="finish">${L('Finish', 'Beenden')}</button></div></div>
+          <button class="link-btn" data-act="abort">${L('Finish', 'Beenden')}</button></div></div>
       ${s.paused ? `<div class="paused-veil"><p class="eyebrow">${L('Paused', 'Pausiert')}</p><p class="session-clock" style="font-size:44px">${fmtDur(S.elapsed(s) / 1000)}</p>
         <button class="btn btn-primary btn-xl" data-act="resume">${icon('play', 'ic-sm')} ${L('Continue', 'Weiter')}</button>
-        <button class="btn btn-ghost" data-act="finish">${L('Finish workout', 'Training beenden')}</button>
+        <button class="btn btn-ghost" data-act="abort">${L('Cancel workout', 'Training abbrechen')}</button>
         <button class="btn btn-ghost" data-act="leave">${L('Back to app', 'Zurück zur App')}</button></div>` : ''}
     </div>`;
     animateFigures(view);
@@ -153,6 +153,34 @@ export function render() {
     else go('workout');
   }
 
+  // Cancel at any time: pause, then save what's done, discard everything, or keep training.
+  function abortDialog() {
+    const wasPaused = s.paused;
+    S.pause(s); paint();
+    const sets = s.items.reduce((n, x) => n + x.done.length, 0);
+    let chosen = false;
+    const close = sheet(`<h3 class="sheet-title">${L('Cancel workout?', 'Training abbrechen?')}</h3>
+      <p class="muted">${sets === 1 ? L('You already completed 1 set.', 'Du hast schon 1 Satz geschafft.') : sets ? L('You already completed {n} sets.', 'Du hast schon {n} Sätze geschafft.', { n: sets }) : L('Nothing completed yet.', 'Noch nichts geschafft.')}</p>
+      <div class="stack-sm mt">
+        ${sets ? `<button class="btn btn-primary btn-block" data-a="save">${icon('check', 'ic-sm')} ${L('Save & finish', 'Speichern & beenden')}</button>` : ''}
+        <button class="btn btn-danger btn-block" data-a="discard">${icon('trash', 'ic-sm')} ${L('Cancel without saving', 'Abbrechen ohne Speichern')}</button>
+        <button class="btn btn-ghost btn-block" data-a="keep">${L('Keep training', 'Weitertrainieren')}</button>
+      </div>`, {
+      onMount(el) {
+        const keep = () => { if (!wasPaused) { S.resume(s); paint(); } };
+        el.parentElement.querySelector('.sheet-backdrop').addEventListener('click', () => { if (!chosen) keep(); });
+        el.addEventListener('click', e => {
+          const b = e.target.closest('[data-a]');
+          if (!b) return;
+          chosen = true; close();
+          if (b.dataset.a === 'save') finish();
+          else if (b.dataset.a === 'discard') { S.discardSession(); toast(L('Workout cancelled.', 'Training abgebrochen.')); go('workout'); }
+          else keep();
+        });
+      },
+    });
+  }
+
   async function onAction(act) {
     const it = S.current(s);
     switch (act) {
@@ -174,6 +202,7 @@ export function render() {
       case 'skip-ex':
         if (S.skipExercise(s) === 'finished') finish(); else { reps = null; paint(); }
         break;
+      case 'abort': abortDialog(); break;
       case 'finish': {
         const sets = s.items.reduce((n, x) => n + x.done.length, 0);
         const ok = await confirmDialog(sets

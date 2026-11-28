@@ -51,7 +51,7 @@ export const ANIMS = {
   crunch: {
     hl: ['abs'], back: true,
     vb: '18 30 172 84',
-    poses: { down: LYING_BACK, up: { ...LYING_BACK, torso: -28, head: -34, hands: [[104, 88], [106, 88]] } },
+    poses: { down: { ...LYING_BACK, hands: [[96, 82], [98, 83]] }, up: { ...LYING_BACK, torso: -28, head: -34, hands: [[90, 72], [92, 73]] } },
     seq: REP('down', 'up', 400, 600, 300),
   },
   situp: {
@@ -73,8 +73,8 @@ export const ANIMS = {
     hl: ['obliques', 'shoulders', 'glutes'],
     vb: '18 30 172 84',
     poses: {
-      down: { hip: [92, 97], torso: -27, hands: [[118, 54], [131, 102]], feet: [[50, 103], [48, 103]] },
-      up: { hip: [92, 90.8], torso: -17.4, hands: [[120, 52], [131, 102]], feet: [[50, 103], [48, 103]] },
+      down: { hip: [92, 97], torso: -27, roll: 90, hands: [[118, 54], [121, 102]], feet: [[50, 103], [50, 103]] },
+      up: { hip: [92, 90.8], torso: -17.4, roll: 90, hands: [[120, 52], [121, 102]], feet: [[50, 103], [50, 103]] },
     },
     seq: [['down', 300], ['down', 800], ['up', 1600], ['up', 800]],
   },
@@ -110,8 +110,8 @@ export const ANIMS = {
     hl: ['glutes', 'hamstrings'], back: true,
     vb: '18 30 172 84',
     poses: {
-      down: { hip: [94, 99], torso: 0, head: 0, hands: [[106, 102], [108, 102]], feet: [[72, 102], [70, 102]], kb: [1, 1], eb: [-1, -1] },
-      up: { hip: [96, 83], torso: 32, head: 0, hands: [[106, 102], [108, 102]], feet: [[72, 102], [70, 102]], kb: [1, 1], eb: [-1, -1] },
+      down: { hip: [94, 99], torso: 0, head: 0, hands: [[96, 103], [98, 103]], feet: [[72, 102], [70, 102]], kb: [1, 1], eb: [-1, -1] },
+      up: { hip: [96, 83], torso: 32, head: 0, hands: [[96, 103], [98, 103]], feet: [[72, 102], [70, 102]], kb: [1, 1], eb: [-1, -1] },
     },
     seq: REP('down', 'up', 400, 700, 500),
   },
@@ -143,12 +143,12 @@ export const ANIMS = {
     seq: [['a', 250], ['a', 300], ['mid', 300], ['b', 250], ['b', 300], ['mid', 300]],
   },
   'standing-twist': {
-    front: true, hl: ['abs', 'obliques', 'quads'],
+    front: true, hl: ['abs', 'obliques', 'quads'], cam: [1, 0.34, 0.06],
     poses: {
-      left: { front: true, hip: [100, 60], torso: -92, hands: [[96, 40], [74, 42]], feet: [[110, 102], [90, 102]] },
-      mid: { front: true, hip: [100, 60], torso: -90, hands: [[114, 36], [86, 36]], feet: [[110, 102], [90, 102]] },
-      right: { front: true, hip: [100, 60], torso: -88, hands: [[126, 42], [104, 40]], feet: [[110, 102], [90, 102]] },
+      left: { front: true, hip: [100, 60], torso: -90, twist: 42, fwd: [0.66, 0.66], hands: [[106, 40], [94, 40]], feet: [[111, 102], [89, 102]] },
+      mid: { front: true, hip: [100, 60], torso: -90, twist: 0, fwd: [0.66, 0.66], hands: [[106, 40], [94, 40]], feet: [[111, 102], [89, 102]] },
+      right: { front: true, hip: [100, 60], torso: -90, twist: -42, fwd: [0.66, 0.66], hands: [[106, 40], [94, 40]], feet: [[111, 102], [89, 102]] },
     },
-    seq: [['left', 200], ['left', 500], ['mid', 200], ['right', 200], ['right', 500], ['mid', 200]],
+    seq: [['left', 250], ['left', 550], ['mid', 0.01], ['mid', 550], ['right', 250], ['right', 550], ['mid', 0.01], ['mid', 550]],
   },
 };

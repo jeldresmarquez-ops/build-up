@@ -460,3 +460,22 @@ a.card.row-flex, button.card.row-flex, a.card.between, button.card.between { dis
 .tag-muscle i { width: 8px; height: 8px; border-radius: 50%; background: #ff5a2e; display: inline-block; box-shadow: 0 0 6px rgba(255, 90, 46, .7); }
 @media (max-height: 700px) { .session-fig { height: 108px; } .session-big { font-size: 88px; } }
 @media (max-height: 500px) { .session-fig { display: none; } }
+.abort-btn { display: inline-flex; align-items: center; gap: 6px; height: 40px; padding: 0 14px 0 10px; border-radius: 999px; background: var(--card2); border: 1px solid var(--line2); font-size: 14px; font-weight: 600; }
+.abort-btn:active { background: var(--line2); }
+/* 3D mannequin */
+.fig3d { position: relative; width: 100%; height: 100%; }
+.fig3d canvas { display: block; width: 100% !important; height: 100% !important; }
+.media { background: radial-gradient(85% 75% at 50% 38%, #4a4c52, #26272b 60%, #161619); }
+.media .fig3d { position: absolute; inset: 0; }
+.session-fig .fig3d, .sheet-fig .fig3d { height: 100%; }
+.session-fig { height: 190px; max-width: 340px; border-radius: 18px; background: radial-gradient(80% 80% at 50% 40%, #44464c, #222327 65%, transparent 100%); }
+.sheet-fig { height: 170px; border-radius: 16px; background: radial-gradient(80% 80% at 50% 40%, #44464c, #222327 65%, #161619); overflow: hidden; }
+@media (max-height: 760px) { .session-fig { height: 140px; } }
+@media (max-height: 640px) { .session-fig { height: 112px; } .session-big { font-size: 80px; } }
+@media (max-height: 500px) { .session-fig { display: none; } }
+@media (max-height: 500px) {
+  .fb-list { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+  .fb-list .fb-btn { margin: 0; padding: 10px 12px; }
+  .fb-list .row-sub { display: none !important; }
+  .fb-list .fb-emoji { width: 32px; height: 32px; font-size: 17px; }
+}

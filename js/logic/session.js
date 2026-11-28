@@ -136,6 +136,11 @@ export function logManual(w, date = new Date()) {
   return entry;
 }
 
+export function discardSession() {
+  db.session = null;
+  save();
+}
+
 export function deleteEntry(id) {
   db.history = db.history.filter(h => h.id !== id);
   save();

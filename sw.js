@@ -3,18 +3,18 @@
 // New versions on the server are NOT picked up automatically: they only arrive when the user taps
 // Profile → "Check for updates" → "Update now", which clears this cache and reloads the app.
 // VERSION is what the update button compares against – bump it on every release.
-const VERSION = 'buildup-v1.8.0';
+const VERSION = 'buildup-v1.9.0';
 const APP_CACHE = 'buildup-app';
 const FONT_CACHE = 'buildup-fonts';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
-  'js/app.js', 'js/i18n.js', 'js/figure.js', 'js/store.js', 'js/ui.js', 'js/router.js',
+  'js/app.js', 'js/i18n.js', 'js/figure.js', 'js/figure2d.js', 'js/store.js', 'js/ui.js', 'js/router.js',
   'js/data/exercises.js', 'js/data/animations.js', 'js/data/exercises-de.js', 'js/data/quotes.js', 'js/data/options.js',
   'js/logic/plan.js', 'js/logic/stats.js', 'js/logic/quotes.js', 'js/logic/food.js', 'js/logic/reminders.js', 'js/logic/session.js', 'js/logic/update.js', 'js/logic/progression.js',
   'js/screens/story.js', 'js/screens/onboarding.js', 'js/screens/startup.js', 'js/screens/home.js', 'js/screens/workout.js',
   'js/screens/session.js', 'js/screens/exercises.js', 'js/screens/food.js', 'js/screens/progress.js', 'js/screens/motivation.js',
   'js/screens/profile.js', 'js/screens/settings.js', 'js/screens/sick.js',
-  'vendor/zxing-browser.min.js',
+  'vendor/zxing-browser.min.js', 'vendor/three.module.min.js',
   'icons/icon.svg', 'icons/icon-192.png', 'icons/icon-512.png', 'icons/apple-touch-icon.png',
 ];
 
