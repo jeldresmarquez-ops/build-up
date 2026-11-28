@@ -238,6 +238,21 @@ export const EXERCISES = [
     video: null,
   },
   {
+    id: 'standing-twist', name: 'Standing Torso Twists', area: 'core', difficulty: 1, type: 'time',
+    muscles: ['Obliques', 'Abdominals', 'Shoulders'],
+    dose: { b: [2, 30], i: [3, 40], a: [3, 45] }, rest: 30,
+    desc: 'Rotate your upper body from side to side with arms extended. Wakes up the core and loosens the spine.',
+    technique: [
+      'Stand with feet wider than hip-width, knees soft.',
+      'Extend your arms forward at chest height.',
+      'Rotate your upper body to one side, hips stay facing forward.',
+      'Turn smoothly to the other side and keep a steady rhythm.',
+    ],
+    mistakes: ['Swinging wildly with momentum.', 'Turning the hips along with the shoulders.', 'Holding your breath.'],
+    safety: ['Rotate only as far as feels comfortable.', 'Keep the movement controlled, especially with back problems.'],
+    video: null,
+  },
+  {
     id: 'high-knees', name: 'High Knees', area: 'cardio', difficulty: 2, type: 'time',
     muscles: ['Hip flexors', 'Quads', 'Calves'],
     dose: { b: [2, 20], i: [3, 30], a: [3, 40] }, rest: 40,

@@ -110,7 +110,7 @@ export function history() {
             <div class="grow"><div class="row-title">${esc(nameOf(h))}</div><div class="row-sub">${fmtDate(h.start)} · ${fmtMin(h.dur)} · ${L('{n} sets', '{n} Sätze', { n: h.sets })}${h.manual ? ' · ' + L('marked', 'markiert') : ''}</div></div>
           </summary>
           <div style="padding:10px 0 0 54px">
-            ${h.items.length ? h.items.map(it => `<p class="small"><b style="font-weight:500">${EX[it.exId]?.name || it.exId}</b> <span class="muted">${it.done.map(d => St.unit(it.exId, d)).join(' · ')}</span></p>`).join('') : `<p class="small muted">${L('Marked as completed without tracking.', 'Ohne Erfassung als erledigt markiert.')}</p>`}
+            ${h.items.length ? h.items.map(it => `<p class="small"><b style="font-weight:500">${EX[it.exId]?.name || it.exId}</b> <span class="muted">${it.done.map(d => St.unit(it.exId, d, it.mode)).join(' · ')}</span></p>`).join('') : `<p class="small muted">${L('Marked as completed without tracking.', 'Ohne Erfassung als erledigt markiert.')}</p>`}
             <button class="link-btn text-danger" data-del="${h.id}">${L('Remove', 'Entfernen')}</button>
           </div></details>`).join('')}</div></div>`).join('')}`,
     mount(view) {

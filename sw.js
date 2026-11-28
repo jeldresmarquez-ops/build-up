@@ -3,7 +3,7 @@
 // New versions on the server are NOT picked up automatically: they only arrive when the user taps
 // Profile → "Check for updates" → "Update now", which clears this cache and reloads the app.
 // VERSION is what the update button compares against – bump it on every release.
-const VERSION = 'buildup-v1.7.0';
+const VERSION = 'buildup-v1.8.0';
 const APP_CACHE = 'buildup-app';
 const FONT_CACHE = 'buildup-fonts';
 const SHELL = [

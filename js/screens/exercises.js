@@ -77,7 +77,7 @@ export function detail({ id }) {
       ${media(e)}
       <div><div class="row-flex" style="gap:8px;flex-wrap:wrap"><span class="tag">${AREAS[e.area]}</span><span class="tag">${DIFFICULTY[e.difficulty]}</span>${e.perSide ? `<span class="tag">${L('Each side', 'Pro Seite')}</span>` : ''}</div>
         <h1 class="h1 mt">${e.name}</h1><p class="muted mt-sm">${esc(e.desc)}</p></div>
-      <div><p class="eyebrow">${L('Muscles', 'Muskeln')}</p><div class="chips mt-sm">${e.muscles.map(m => `<span class="tag" style="height:32px;padding:0 12px">${m}</span>`).join('')}</div></div>
+      <div><p class="eyebrow">${L('Muscles', 'Muskeln')}</p><div class="chips mt-sm">${e.muscles.map(m => `<span class="tag tag-muscle" style="height:32px;padding:0 12px"><i></i>${m}</span>`).join('')}</div></div>
       <div><p class="eyebrow">${e.type === 'time' ? L('Suggested duration', 'Empfohlene Dauer') : L('Suggested repetitions', 'Empfohlene Wiederholungen')}</p>
         <div class="dose mt-sm">${levels.map(([k, n]) => `<div style="${k === lv ? 'border-color:var(--text)' : ''}">
           <div class="num">${amt(e.dose[k])}</div><div class="tiny muted">${n}</div></div>`).join('')}</div>

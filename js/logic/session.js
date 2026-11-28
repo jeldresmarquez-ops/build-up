@@ -37,7 +37,7 @@ export function resume(s) {
 
 export function startTimed(s) {
   const it = current(s), e = EX[it.exId];
-  const secs = it.target * (e.perSide ? 2 : 1);
+  const secs = it.mode === 'time' ? it.target : it.target * (e.perSide ? 2 : 1);
   s.phase = 'timed';
   s.ends = now() + secs * 1000;
   s.workStart = now();
@@ -57,7 +57,7 @@ export function completeSet(s, value) {
     return 'next';
   }
   // Last set of this exercise: ask how it felt (not in gentle sick-mode sessions).
-  if (s.cat !== 'light') { s.phase = 'feedback'; save(); return 'feedback'; }
+  if (s.cat !== 'light' && it.ask !== false) { s.phase = 'feedback'; save(); return 'feedback'; }
   return nextExercise(s);
 }
 
@@ -105,13 +105,14 @@ export function finishSession(s, { manual = false } = {}) {
   db.session = null;
   if (!sets && !manual) { save(); return null; }
   const before = Object.fromEntries(records().map(r => [r.exId, r.best]));
-  const reps = s.items.reduce((n, it) => n + (EX[it.exId]?.type === 'reps' ? it.done.reduce((a, b) => a + b, 0) : 0), 0);
+  const reps = s.items.reduce((n, it) => n + (EX[it.exId]?.type === 'reps' && it.mode !== 'time' ? it.done.reduce((a, b) => a + b, 0) : 0), 0);
   const entry = {
     id: s.id, cat: s.cat, name: s.name, level: s.level,
     start: s.startedAt, end: now(), dur: Math.round(s.acc / 1000), sets, reps,
-    items: s.items.filter(it => it.done.length).map(it => ({ exId: it.exId, target: it.target, done: it.done, rating: it.rating || null })),
+    items: s.items.filter(it => it.done.length).map(it => ({ exId: it.exId, target: it.target, done: it.done, rating: it.rating || null, ...(it.mode ? { mode: it.mode } : {}) })),
   };
   entry.newRecords = entry.items
+    .filter(it => it.mode !== 'time' || EX[it.exId]?.type === 'time')
     .map(it => ({ exId: it.exId, best: Math.max(...it.done), prev: before[it.exId] || 0 }))
     .filter(r => r.prev > 0 && r.best > r.prev);
   db.history.push(entry);

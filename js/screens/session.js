@@ -32,6 +32,7 @@ function beep(times = 1) {
 }
 
 const setOf = (a, b) => L('Set {a} of {b}', 'Satz {a} von {b}', { a, b });
+const roundOf = it => L('Round {a} of {b}', 'Runde {a} von {b}', { a: it.round, b: it.rounds });
 
 export function render() {
   const s = db.session;
@@ -55,10 +56,13 @@ export function render() {
         <span class="grow"><span class="row-title">${title}</span><span class="row-sub wrap" style="display:block">${sub}</span></span></button>`;
       const step = stepFor(it.exId);
       const more = e.type === 'time' ? `+${step}s` : `+${step}`;
+      const moreText = it.mode === 'time' && e.type !== 'time'
+        ? L('More reps in your normal workouts', 'Mehr Wiederholungen in deinen normalen Trainings')
+        : L('Next time a bit more ({m})', 'Nächstes Mal etwas mehr ({m})', { m: more });
       main = `<p class="eyebrow">${L('Exercise done', 'Übung geschafft')}</p>
         <h1 class="session-name mt-sm">${e.name}</h1>
         <p class="muted mt">${L('How was it for you?', 'Wie war es für dich?')}</p>`;
-      actions = `<div>${fb('easy', '💪', RATING.easy(), L('Next time a bit more ({m})', 'Nächstes Mal etwas mehr ({m})', { m: more }))}
+      actions = `<div>${fb('easy', '💪', RATING.easy(), moreText)}
         ${fb('hard', '😤', RATING.hard(), L('Stays the same', 'Bleibt gleich'))}
         ${fb('help', '🤝', RATING.help(), L('Stays the same', 'Bleibt gleich'))}</div>`;
     } else if (s.phase === 'rest') {
@@ -66,16 +70,17 @@ export function render() {
         <div class="session-big rest" data-t="count">${Math.ceil(S.remaining(s) / 1000)}</div>
         <p class="session-unit">${L('seconds', 'Sekunden')}</p>`;
       actions = `<div class="session-next">${icon('right')}<div class="grow"><p class="tiny muted">${L('Up next', 'Als Nächstes')}</p>
-          <p class="row-title">${e.name} · ${setOf(s.set + 1, it.sets)}</p></div></div>
+          <p class="row-title">${e.name} · ${it.round ? roundOf(it) : setOf(s.set + 1, it.sets)}</p></div></div>
         <div class="grid2"><button class="btn btn-ghost" data-act="plus">+15 s</button><button class="btn btn-primary" data-act="skip-rest">${L('Skip rest', 'Pause überspringen')}</button></div>`;
-    } else if (e.type === 'time') {
-      const total = it.target * (e.perSide ? 2 : 1);
+    } else if (e.type === 'time' || it.mode === 'time') {
+      const split = e.perSide && it.mode !== 'time';
+      const total = it.target * (split ? 2 : 1);
       const running = s.phase === 'timed';
-      const side = !e.perSide ? L('seconds', 'Sekunden')
+      const side = !split ? L('seconds', 'Sekunden')
         : running && S.remaining(s) <= it.target * 1000 ? L('Second side', 'Zweite Seite')
         : running ? L('First side', 'Erste Seite')
         : L('{n}s each side', '{n}s pro Seite', { n: it.target });
-      main = `<div class="session-fig">${figureSvg(it.exId)}</div><p class="eyebrow">${setOf(s.set + 1, it.sets)}</p>
+      main = `<div class="session-fig">${figureSvg(it.exId)}</div><p class="eyebrow">${it.round ? roundOf(it) : setOf(s.set + 1, it.sets)}</p>
         <h1 class="session-name mt-sm">${e.name}</h1>
         <div class="session-big" data-t="count">${running ? Math.ceil(S.remaining(s) / 1000) : total}</div>
         <p class="session-unit" data-t="side">${side}</p>`;
@@ -120,13 +125,17 @@ export function render() {
       const left = S.remaining(s);
       if (cnt) cnt.textContent = Math.ceil(left / 1000);
       const it = S.current(s), e = EX[it.exId];
-      if (s.phase === 'timed' && e.perSide && !halfBeeped && left <= it.target * 1000) {
+      if (s.phase === 'timed' && e.perSide && it.mode !== 'time' && !halfBeeped && left <= it.target * 1000) {
         halfBeeped = true; beep(1);
         const side = view.querySelector('[data-t="side"]');
         if (side) side.textContent = L('Switch sides', 'Seite wechseln');
       }
       if (left <= 0) {
-        if (s.phase === 'rest') { beep(2); S.endRest(s); reps = null; paint(); }
+        if (s.phase === 'rest') {
+          beep(2); S.endRest(s); reps = null;
+          if (S.current(s).mode === 'time') { halfBeeped = false; S.startTimed(s); } // circuits continue automatically
+          paint();
+        }
         else { beep(2); done(S.completeSet(s, it.target)); }
       }
     }
@@ -154,7 +163,7 @@ export function render() {
       case 'time-done': {
         const e = EX[it.exId];
         const held = (Date.now() - s.workStart) / 1000;
-        done(S.completeSet(s, Math.min(it.target, held / (e.perSide ? 2 : 1))));
+        done(S.completeSet(s, Math.min(it.target, held / (e.perSide && it.mode !== 'time' ? 2 : 1))));
         break;
       }
       case 'plus': S.addRest(s, 15); tick(); break;
@@ -178,6 +187,11 @@ export function render() {
         const r = S.answerFeedback(s, act.slice(3));
         const e = EX[it.exId];
         const u = n => (e.type === 'time' ? `${n}s` : `${n} ${L('reps', 'Wdh.')}`);
+        if (it.mode === 'time' && e.type !== 'time') {
+          toast(act === 'fb-easy' ? L('Strong! {x}: a bit harder next time.', 'Stark! {x}: nächstes Mal etwas schwerer.', { x: e.name }) : L('Okay – stays the same', 'Alles klar – bleibt gleich'));
+          done(r.result);
+          break;
+        }
         toast(act === 'fb-easy'
           ? (r.change.added ? L('Strong! Next time: {n}', 'Stark! Nächstes Mal: {n}', { n: u(r.target + r.change.added) }) : L('Strong! You are at the maximum.', 'Stark! Du bist am Maximum.'))
           : L('Okay – stays at {n}', 'Alles klar – bleibt bei {n}', { n: u(r.target) }));
@@ -234,7 +248,7 @@ export function summary({ id }) {
         ${e.newRecords.map(r => `<div class="row"><div class="row-icon">${icon('star')}</div><div class="grow"><div class="row-title">${EX[r.exId].name}</div>
           <div class="row-sub">${unit(r.exId, r.prev)} → ${unit(r.exId, r.best)}</div></div></div>`).join('')}</div>` : ''}
       <div class="card list-card">${e.items.map(it => `<div class="row"><div class="grow"><div class="row-title">${EX[it.exId].name}</div>
-        <div class="row-sub">${it.done.map(d => unit(it.exId, d)).join(' · ')}${it.rating ? ' · ' + RATING[it.rating]() : ''}</div></div></div>`).join('')}</div>
+        <div class="row-sub">${it.done.map(d => unit(it.exId, d, it.mode)).join(' · ')}${it.rating ? ' · ' + RATING[it.rating]() : ''}</div></div></div>`).join('')}</div>
       <div class="stack-sm"><a class="btn btn-primary btn-block" href="#/home">${L('Back to home', 'Zurück zum Start')}</a>
         <a class="btn btn-ghost btn-block" href="#/progress">${L('View progress', 'Fortschritt ansehen')}</a></div>`,
   };

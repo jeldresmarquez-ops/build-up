@@ -10,9 +10,11 @@ import { confirmEndSick } from './sick.js';
 
 let weekOffset = 0;
 
+const muscleNames = id => EX[id].muscles.slice(0, 3).join(', ');
+
 const doseText = it => {
   const e = EX[it.exId];
-  const amount = e.type === 'time' ? `${it.target}s` : `${it.target} ${L('reps', 'Wdh.')}`;
+  const amount = e.type === 'time' || it.mode === 'time' ? `${it.target}s` : `${it.target} ${L('reps', 'Wdh.')}`;
   const normal = it.normal ? ` · ${L('normally', 'sonst')} ${it.normal[0]} × ${e.type === 'time' ? it.normal[1] + 's' : it.normal[1]}` : '';
   return `${it.sets} × ${amount}${e.perSide ? ' ' + L('each side', 'pro Seite') : ''}${normal}`;
 };
@@ -186,13 +188,21 @@ export function preview({ id }, query) {
   const cat = CAT[id] || CAT.full;
   const minutes = Number(query.get('m')) || db.profile.minutes;
   const w = buildWorkout(cat.id, db.profile, minutes);
+  // A circuit repeats the same exercises each round – list them once.
+  const list = w.circuit ? w.items.filter(it => it.round === 1) : w.items;
+  const first = w.items[0] || {};
+  const circuitInfo = w.circuit ? `<div class="stat-row">
+        <div class="stat"><div class="num">${first.rounds}</div><div class="tiny">${L('Rounds', 'Runden')}</div></div>
+        <div class="stat"><div class="num">${first.target}s</div><div class="tiny">${L('Work', 'Belastung')}</div></div>
+        <div class="stat"><div class="num">${first.rest}s</div><div class="tiny">${L('Rest', 'Pause')}</div></div></div>
+      <p class="note">${L('About {t}. After each rest the next exercise starts automatically – just follow along.', 'Etwa {t}. Nach jeder Pause startet die nächste Übung automatisch – einfach mitmachen.', { t: fmtMin(w.seconds) })}</p>` : '';
   const html = `${backBar('#/workout', '')}
-    <div><p class="eyebrow">${label(EXPERIENCE, w.level)} · ${L('{n} exercises', '{n} Übungen', { n: w.items.length })}</p><h1 class="h1 mt-sm">${cat.name}</h1><p class="muted mt-sm">${esc(cat.desc)}</p></div>
-    ${cat.light ? `<div class="callout">${icon('shield')}<span>${L('Sick mode plan: about half the reps, more rest. Stop if you feel worse.', 'Krank-Modus-Plan: etwa halbe Wiederholungen, mehr Pause. Hör auf, wenn es dir schlechter geht.')}</span></div>` : `<div><p class="eyebrow">${L('Duration', 'Dauer')}</p><div class="chips scroll mt-sm">${MINUTES.map(m => `<a class="chip ${m === minutes ? 'on' : ''}" href="#/workout/c/${cat.id}?m=${m}">${m} min</a>`).join('')}</div>
+    <div><p class="eyebrow">${label(EXPERIENCE, w.level)} · ${L('{n} exercises', '{n} Übungen', { n: list.length })}</p><h1 class="h1 mt-sm">${cat.name}</h1><p class="muted mt-sm">${esc(cat.desc)}</p></div>
+    ${w.circuit ? circuitInfo : cat.light ? `<div class="callout">${icon('shield')}<span>${L('Sick mode plan: about half the reps, more rest. Stop if you feel worse.', 'Krank-Modus-Plan: etwa halbe Wiederholungen, mehr Pause. Hör auf, wenn es dir schlechter geht.')}</span></div>` : `<div><p class="eyebrow">${L('Duration', 'Dauer')}</p><div class="chips scroll mt-sm">${MINUTES.map(m => `<a class="chip ${m === minutes ? 'on' : ''}" href="#/workout/c/${cat.id}?m=${m}">${m} min</a>`).join('')}</div>
       <p class="note mt-sm">${L('Estimated {t} including rest.', 'Etwa {t} inklusive Pausen.', { t: fmtMin(w.seconds) })}</p></div>`}
-    <div class="card list-card">${w.items.map((it, k) => `<a class="row" href="#/exercises/${it.exId}">
+    <div class="card list-card">${list.map((it, k) => `<a class="row" href="#/exercises/${it.exId}">
         <div class="row-icon num" style="font-size:17px">${k + 1}</div>
-        <div class="grow"><div class="row-title">${EX[it.exId].name}</div><div class="row-sub wrap">${doseText(it)} · ${L('rest', 'Pause')} ${it.rest}s</div></div>
+        <div class="grow"><div class="row-title">${EX[it.exId].name}</div><div class="row-sub wrap">${w.circuit ? `${it.target}s · ${muscleNames(it.exId)}` : `${doseText(it)} · ${L('rest', 'Pause')} ${it.rest}s`}</div></div>
         ${icon('right', 'chev')}</a>`).join('')}</div>
     <div class="callout">${icon('info')}<span>${L('Warm up for a few minutes first. Stop if you feel pain – adjust reps to your level.', 'Wärm dich vorher ein paar Minuten auf. Hör bei Schmerzen auf – pass die Wiederholungen deinem Level an.')}</span></div>
     <button class="btn btn-primary btn-block btn-xl" data-start>${db.session ? L('Start new workout', 'Neues Training starten') : L('Start workout', 'Training starten')}</button>`;

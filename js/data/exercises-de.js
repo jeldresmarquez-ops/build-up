@@ -112,6 +112,13 @@ export const EXERCISES_DE = {
     mistakes: ['Zu hoch heben.', 'Den Nacken nach oben überstrecken.', 'Zu schnell bewegen.'],
     safety: ['Blick zum Boden richten.', 'Kleine, kontrollierte Bewegungen reichen.'],
   },
+  'standing-twist': {
+    name: 'Rumpfdrehung im Stand',
+    desc: 'Den Oberkörper mit gestreckten Armen von Seite zu Seite drehen. Weckt den Rumpf und lockert die Wirbelsäule.',
+    technique: ['Etwas breiter als hüftbreit stehen, Knie locker.', 'Arme auf Brusthöhe nach vorne strecken.', 'Den Oberkörper zu einer Seite drehen, die Hüfte bleibt nach vorne gerichtet.', 'Gleichmäßig zur anderen Seite drehen und im Rhythmus bleiben.'],
+    mistakes: ['Wild mit Schwung drehen.', 'Die Hüfte mitdrehen.', 'Luft anhalten.'],
+    safety: ['Nur so weit drehen, wie es sich gut anfühlt.', 'Bei Rückenproblemen besonders kontrolliert bewegen.'],
+  },
   'high-knees': {
     name: 'Kniehebelauf',
     desc: 'Auf der Stelle laufen mit hohen Knien. Schnelligkeit und Koordination.',

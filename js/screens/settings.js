@@ -5,7 +5,7 @@ import { askPermission, notificationsSupported, nextReminder, buildICS, MESSAGE 
 import { refresh } from '../router.js';
 import { resetProgression } from '../logic/progression.js';
 
-export const VERSION = '1.7.0';
+export const VERSION = '1.8.0';
 
 export function render({ page }) {
   const fn = { language, reminders, appearance, data, about }[page];

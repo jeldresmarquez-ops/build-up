@@ -6,6 +6,10 @@ import { L } from '../i18n.js';
 import { bonusFor } from './progression.js';
 
 export const CATEGORIES = [
+  { id: 'morning', name: L('Morning Full Body', 'Morgen-Ganzkörper'),
+    desc: L('Circuit: 7 exercises, 40 s work, 20 s rest, 3 rounds.', 'Zirkel: 7 Übungen, 40 s Belastung, 20 s Pause, 3 Runden.'),
+    pool: ['squat', 'pushup', 'lunge', 'standing-twist', 'crunch', 'plank', 'high-knees'],
+    circuit: { beginner: [2, 30, 30], intermediate: [3, 40, 20], advanced: [3, 45, 15] } },
   { id: 'full', name: L('Full Body', 'Ganzkörper'), desc: L('Every major muscle group in one session.', 'Alle großen Muskelgruppen in einer Einheit.'),
     pool: ['jumping-jack', 'squat', 'pushup', 'glute-bridge', 'lunge', 'mountain-climber', 'superman', 'plank', 'burpee'] },
   { id: 'upper', name: L('Upper Body', 'Oberkörper'), desc: L('Chest, shoulders, arms and back.', 'Brust, Schultern, Arme und Rücken.'),
@@ -39,6 +43,7 @@ const LEGGY = new Set(['lower', 'football', 'full']);
 // Approximate seconds for one set incl. rest.
 export function setSeconds(item) {
   const e = EX[item.exId];
+  if (item.mode === 'time') return item.target + item.rest;
   const sides = e.perSide ? 2 : 1;
   const work = e.type === 'time' ? item.target * sides : item.target * 3 * sides;
   return work + item.rest + 10;
@@ -50,6 +55,7 @@ export function buildWorkout(catId, profile = db.profile, minutes) {
   const level = cat.level || profile.experience || 'beginner';
   const key = LEVEL_KEY[level] || 'b';
   if (cat.light) return buildLight(cat, profile, level, key);
+  if (cat.circuit) return buildCircuit(cat, level);
   const budget = (minutes || profile.minutes || 20) * 60;
   const pref = new Set(profile.preferred || []);
 
@@ -87,6 +93,17 @@ export function buildWorkout(catId, profile = db.profile, minutes) {
   const order = cat.pool;
   chosen.sort((a, b) => order.indexOf(a.exId) - order.indexOf(b.exId));
   return { cat: cat.id, name: cat.name, level, items: chosen, seconds: total };
+}
+
+// Circuit like a follow-along video: every exercise for a fixed time, then a short rest, several rounds.
+function buildCircuit(cat, level) {
+  const [rounds, work, rest] = cat.circuit[level] || cat.circuit.intermediate;
+  const items = [];
+  for (let r = 1; r <= rounds; r++) {
+    for (const id of cat.pool) items.push({ exId: id, sets: 1, target: work, rest, mode: 'time', round: r, rounds, ask: r === rounds });
+  }
+  const seconds = items.reduce((t, it) => t + it.target + it.rest, 0);
+  return { cat: cat.id, name: cat.name, level, items, seconds, circuit: true };
 }
 
 // Sick-day version: about half the reps, 1–2 sets, +30 s rest, only calm exercises.

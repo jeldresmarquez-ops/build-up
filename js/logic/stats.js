@@ -67,6 +67,7 @@ export function records(list = db.history) {
   const sorted = [...list].sort((a, b) => a.start - b.start);
   for (const h of sorted) {
     for (const it of h.items || []) {
+      if (it.mode === 'time' && EX[it.exId]?.type !== 'time') continue; // timed circuit round, not a rep record
       const best = Math.max(0, ...(it.done || []));
       if (!best || !EX[it.exId]) continue;
       const r = rec[it.exId] || (rec[it.exId] = { exId: it.exId, first: best, firstAt: h.start, best: 0, bestAt: 0, sessions: 0 });
@@ -77,7 +78,7 @@ export function records(list = db.history) {
   return Object.values(rec).sort((a, b) => b.bestAt - a.bestAt);
 }
 
-export const unit = (exId, n) => {
+export const unit = (exId, n, mode) => {
   const e = EX[exId];
-  return e?.type === 'time' ? `${n}s` : `${n} ${L('reps', 'Wdh.')}`;
+  return e?.type === 'time' || mode === 'time' ? `${n}s` : `${n} ${L('reps', 'Wdh.')}`;
 };

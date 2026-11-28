@@ -453,3 +453,10 @@ a.card.row-flex, button.card.row-flex, a.card.between, button.card.between { dis
 .fb-btn .fb-emoji { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--card2); font-size: 20px; flex: none; }
 @media (max-height: 700px) { .session-fig { height: 84px; margin-bottom: 4px; } .session-big { font-size: 96px; } }
 @media (max-height: 500px) { .session-fig { display: none; } }
+/* Mannequin figure */
+.fig .fig-shadow { fill: rgba(0, 0, 0, .45); }
+.fig .fig-floor { stroke: #2b2b31; stroke-width: 1.5; }
+.media { background: radial-gradient(90% 80% at 50% 40%, #2a2b30, #121215 75%); }
+.tag-muscle i { width: 8px; height: 8px; border-radius: 50%; background: #ff5a2e; display: inline-block; box-shadow: 0 0 6px rgba(255, 90, 46, .7); }
+@media (max-height: 700px) { .session-fig { height: 108px; } .session-big { font-size: 88px; } }
+@media (max-height: 500px) { .session-fig { display: none; } }
