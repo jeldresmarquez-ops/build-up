@@ -116,12 +116,7 @@ function boot() {
   applyAppearance();
   if ('serviceWorker' in navigator && location.protocol !== 'file:') {
     navigator.serviceWorker.register('sw.js').then(reg => reg.update()).catch(() => { /* offline support unavailable */ });
-    // When a new version takes over, reload once so the phone shows it right away.
-    const hadController = !!navigator.serviceWorker.controller;
-    let reloaded = false;
-    navigator.serviceWorker.addEventListener('controllerchange', () => {
-      if (hadController && !reloaded) { reloaded = true; location.reload(); }
-    });
+    // No automatic reload: new versions only arrive via Profile → "Check for updates".
   }
   if (!db.storySeen) {
     story.show(() => onboarding.show(() => { location.hash = '#/home'; startShell(); }));
