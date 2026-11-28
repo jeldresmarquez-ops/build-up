@@ -2,6 +2,7 @@
 import { db, save, uid } from '../store.js';
 import { EX } from '../data/exercises.js';
 import { records } from './stats.js';
+import { applyFeedback } from './progression.js';
 
 const now = () => Date.now();
 
@@ -43,23 +44,42 @@ export function startTimed(s) {
   save();
 }
 
-// Returns 'next' | 'finished'
+// Returns 'next' | 'feedback' | 'finished'
 export function completeSet(s, value) {
   const it = current(s);
   it.done.push(Math.max(0, Math.round(value)));
   s.ends = null; s.left = null; s.workStart = null;
   if (s.set + 1 < it.sets) {
     s.set++;
-  } else if (s.ex + 1 < s.items.length) {
-    s.ex++; s.set = 0;
-  } else {
+    s.phase = 'rest';
+    s.ends = now() + it.rest * 1000;
     save();
-    return 'finished';
+    return 'next';
   }
-  s.phase = 'rest';
-  s.ends = now() + it.rest * 1000;
+  // Last set of this exercise: ask how it felt (not in gentle sick-mode sessions).
+  if (s.cat !== 'light') { s.phase = 'feedback'; save(); return 'feedback'; }
+  return nextExercise(s);
+}
+
+function nextExercise(s) {
+  const it = current(s);
+  if (s.ex + 1 < s.items.length) {
+    s.ex++; s.set = 0;
+    s.phase = 'rest';
+    s.ends = now() + it.rest * 1000;
+    save();
+    return 'next';
+  }
   save();
-  return 'next';
+  return 'finished';
+}
+
+// rating: 'easy' | 'hard' | 'help'
+export function answerFeedback(s, rating) {
+  const it = current(s);
+  it.rating = rating;
+  const change = applyFeedback(it.exId, rating);
+  return { result: nextExercise(s), change, target: it.target };
 }
 
 export function endRest(s) {
@@ -89,7 +109,7 @@ export function finishSession(s, { manual = false } = {}) {
   const entry = {
     id: s.id, cat: s.cat, name: s.name, level: s.level,
     start: s.startedAt, end: now(), dur: Math.round(s.acc / 1000), sets, reps,
-    items: s.items.filter(it => it.done.length).map(it => ({ exId: it.exId, target: it.target, done: it.done })),
+    items: s.items.filter(it => it.done.length).map(it => ({ exId: it.exId, target: it.target, done: it.done, rating: it.rating || null })),
   };
   entry.newRecords = entry.items
     .map(it => ({ exId: it.exId, best: Math.max(...it.done), prev: before[it.exId] || 0 }))

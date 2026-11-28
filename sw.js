@@ -1,10 +1,10 @@
 // BUILD UP service worker – offline support.
-const VERSION = 'buildup-v1.5.1';
+const VERSION = 'buildup-v1.6.0';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
-  'js/app.js', 'js/i18n.js', 'js/store.js', 'js/ui.js', 'js/router.js',
-  'js/data/exercises.js', 'js/data/exercises-de.js', 'js/data/quotes.js', 'js/data/options.js',
-  'js/logic/plan.js', 'js/logic/stats.js', 'js/logic/quotes.js', 'js/logic/food.js', 'js/logic/reminders.js', 'js/logic/session.js', 'js/logic/update.js',
+  'js/app.js', 'js/i18n.js', 'js/figure.js', 'js/store.js', 'js/ui.js', 'js/router.js',
+  'js/data/exercises.js', 'js/data/animations.js', 'js/data/exercises-de.js', 'js/data/quotes.js', 'js/data/options.js',
+  'js/logic/plan.js', 'js/logic/stats.js', 'js/logic/quotes.js', 'js/logic/food.js', 'js/logic/reminders.js', 'js/logic/session.js', 'js/logic/update.js', 'js/logic/progression.js',
   'js/screens/story.js', 'js/screens/onboarding.js', 'js/screens/startup.js', 'js/screens/home.js', 'js/screens/workout.js',
   'js/screens/session.js', 'js/screens/exercises.js', 'js/screens/food.js', 'js/screens/progress.js', 'js/screens/motivation.js',
   'js/screens/profile.js', 'js/screens/settings.js', 'js/screens/sick.js',

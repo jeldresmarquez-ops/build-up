@@ -5,6 +5,8 @@ import { EXERCISES, EX, AREAS, DIFFICULTY } from '../data/exercises.js';
 import { EXPERIENCE } from '../data/options.js';
 import { records, unit } from '../logic/stats.js';
 import { refresh } from '../router.js';
+import { figureSvg, animateFigures } from '../figure.js';
+import { bonusFor } from '../logic/progression.js';
 
 let filter = 'all';
 let term = '';
@@ -59,8 +61,7 @@ function media(e) {
     return `<div class="media"><video src="${esc(e.video)}" autoplay muted loop playsinline preload="metadata"
       onerror="this.parentElement.innerHTML='<div class=media-ph><b>${L('Video unavailable', 'Video nicht verfügbar')}</b></div>'"></video></div>`;
   }
-  return `<div class="media"><div class="media-pulse"></div><div class="media-ph" style="position:relative">${icon('video')}
-    <b>${L('Video demonstration coming soon', 'Video-Demonstration folgt bald')}</b>${L('Follow the technique steps below.', 'Folge den Technik-Schritten unten.')}</div></div>`;
+  return `<div class="media">${figureSvg(e.id)}<span class="media-tag">${L('Animation', 'Animation')}</span></div>`;
 }
 
 export function detail({ id }) {
@@ -81,12 +82,15 @@ export function detail({ id }) {
         <div class="dose mt-sm">${levels.map(([k, n]) => `<div style="${k === lv ? 'border-color:var(--text)' : ''}">
           <div class="num">${amt(e.dose[k])}</div><div class="tiny muted">${n}</div></div>`).join('')}</div>
         <p class="note mt-sm">${L('Rest about {n} seconds between sets.', 'Etwa {n} Sekunden Pause zwischen den Sätzen.', { n: e.rest })}${e.perSide ? ' ' + L('Values are per side.', 'Werte gelten pro Seite.') : ''}</p></div>
+      ${bonusFor(e.id) ? `<div class="card card-tight row-flex" style="border-color:var(--accent)"><div class="row-icon">${icon('chart')}</div><div class="grow"><p class="tiny muted">${L('Your current goal', 'Dein aktuelles Ziel')}</p>
+        <p class="row-title">${amt([e.dose[lv][0], e.dose[lv][1] + bonusFor(e.id)])} <span class="muted small">· +${bonusFor(e.id)}${e.type === 'time' ? 's' : ''} ${L('from your progress', 'durch deine Steigerung')}</span></p></div></div>` : ''}
       ${rec ? `<div class="card card-tight row-flex"><div class="row-icon">${icon('star')}</div><div class="grow"><p class="tiny muted">${L('Your best set', 'Dein bester Satz')}</p>
         <p class="row-title">${unit(e.id, rec.best)}${rec.best > rec.first ? ` <span class="muted small">· ${L('up from {v}', 'vorher {v}', { v: unit(e.id, rec.first) })}</span>` : ''}</p></div></div>` : ''}
       <div><p class="eyebrow">${L('Technique', 'Technik')}</p><ol class="steps mt-sm">${e.technique.map(t => `<li>${esc(t)}</li>`).join('')}</ol></div>
       <div><p class="eyebrow">${L('Common mistakes', 'Häufige Fehler')}</p><ul class="bullets warn mt-sm">${e.mistakes.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>
       <div><p class="eyebrow">${L('Safety tips', 'Sicherheitstipps')}</p><ul class="bullets safe mt-sm">${e.safety.map(t => `<li>${esc(t)}</li>`).join('')}</ul></div>`,
     mount(view) {
+      animateFigures(view);
       view.querySelector('[data-fav]').addEventListener('click', () => {
         db.favExercises = fav ? db.favExercises.filter(x => x !== e.id) : [...db.favExercises, e.id];
         save(); refresh();

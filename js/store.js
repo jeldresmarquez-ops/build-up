@@ -14,6 +14,7 @@ const defaults = () => ({
   history: [],
   session: null,
   sick: null,
+  progress: {},
   favExercises: [],
   customQuotes: [],
   favQuotes: [],

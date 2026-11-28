@@ -3,6 +3,7 @@ import { db, save } from '../store.js';
 import { EX } from '../data/exercises.js';
 import { dayKey, startOfDay, weekdayIdx } from '../ui.js';
 import { L } from '../i18n.js';
+import { bonusFor } from './progression.js';
 
 export const CATEGORIES = [
   { id: 'full', name: L('Full Body', 'Ganzkörper'), desc: L('Every major muscle group in one session.', 'Alle großen Muskelgruppen in einer Einheit.'),
@@ -60,8 +61,8 @@ export function buildWorkout(catId, profile = db.profile, minutes) {
   const chosen = [];
   let total = 0;
   for (const e of ranked) {
-    const [sets, target] = e.dose[key];
-    const it = { exId: e.id, sets, target, rest: e.rest };
+    const [sets, base] = e.dose[key];
+    const it = { exId: e.id, sets, target: base + bonusFor(e.id), rest: e.rest };
     let t = setSeconds(it) * it.sets;
     // Prefer more variety with fewer sets over fewer exercises.
     while (chosen.length >= 3 && total + t > budget * 1.05 && it.sets > 2) { it.sets--; t = setSeconds(it) * it.sets; }
@@ -96,7 +97,8 @@ function buildLight(cat, profile, level, key) {
     .map(id => EX[id]).filter(Boolean);
   const ranked = [...pool.filter(e => pref.has(e.id)), ...pool.filter(e => !pref.has(e.id))].slice(0, 4);
   const items = ranked.map(e => {
-    const [sets, target] = e.dose[key];
+    const [sets, base] = e.dose[key];
+    const target = base + bonusFor(e.id);
     const t = e.type === 'time' ? Math.max(10, Math.round((target * 0.5) / 5) * 5) : Math.max(3, Math.round(target * 0.5));
     return { exId: e.id, sets: level === 'beginner' ? 1 : 2, target: t, rest: e.rest + 30, normal: [sets, target] };
   });

@@ -3,8 +3,9 @@ import { esc, icon, backBar, toast, confirmDialog, download, DAYS, DAYS_LONG, we
 import { L, lang, setLang } from '../i18n.js';
 import { askPermission, notificationsSupported, nextReminder, buildICS, MESSAGE } from '../logic/reminders.js';
 import { refresh } from '../router.js';
+import { resetProgression } from '../logic/progression.js';
 
-export const VERSION = '1.5.1';
+export const VERSION = '1.6.0';
 
 export function render({ page }) {
   const fn = { language, reminders, appearance, data, about }[page];
@@ -134,6 +135,7 @@ function data() {
       <div class="card list-card">
         <button class="row" data-act="foods"><div class="row-icon">${icon('food')}</div><div class="grow"><div class="row-title">${L('Clear product history', 'Produktverlauf löschen')}</div><div class="row-sub">${L('{n} saved products', '{n} gespeicherte Produkte', { n: db.foods.length })}</div></div></button>
         <button class="row" data-act="progress"><div class="row-icon">${icon('refresh')}</div><div class="grow"><div class="row-title">${L('Reset training progress', 'Trainingsfortschritt zurücksetzen')}</div><div class="row-sub">${L('{n} workouts', '{n} Trainings', { n: db.history.length })}</div></div></button>
+        <button class="row" data-act="prog"><div class="row-icon">${icon('chart')}</div><div class="grow"><div class="row-title">${L('Reset progression', 'Steigerung zurücksetzen')}</div><div class="row-sub">${L('Back to the standard reps', 'Zurück zu den Standard-Wiederholungen')}</div></div></button>
         <button class="row" data-act="all"><div class="row-icon" style="color:var(--bad)">${icon('trash')}</div><div class="grow"><div class="row-title text-danger">${L('Delete all data', 'Alle Daten löschen')}</div><div class="row-sub">${L('Profile, progress, favourites, everything', 'Profil, Fortschritt, Favoriten, alles')}</div></div></button>
       </div>`,
     mount(view) {
@@ -160,8 +162,11 @@ function data() {
         if (act === 'foods' && await confirmDialog({ title: L('Clear product history?', 'Produktverlauf löschen?'), text: L('All saved products will be removed.', 'Alle gespeicherten Produkte werden entfernt.'), confirm: L('Clear', 'Löschen'), danger: true })) {
           db.foods = []; db.pending = []; save(); toast(L('Product history cleared.', 'Produktverlauf gelöscht.')); refresh();
         }
+        if (act === 'prog' && await confirmDialog({ title: L('Reset progression?', 'Steigerung zurücksetzen?'), text: L('All exercises go back to the standard number of reps for your level.', 'Alle Übungen gehen zurück auf die Standard-Wiederholungen für dein Level.'), confirm: L('Reset', 'Zurücksetzen'), danger: true })) {
+          resetProgression(); toast(L('Progression reset.', 'Steigerung zurückgesetzt.')); refresh();
+        }
         if (act === 'progress' && await confirmDialog({ title: L('Reset training progress?', 'Trainingsfortschritt zurücksetzen?'), text: L('All workouts, records and the running session will be deleted. This cannot be undone.', 'Alle Trainings, Rekorde und das laufende Training werden gelöscht. Das kann nicht rückgängig gemacht werden.'), confirm: L('Reset progress', 'Zurücksetzen'), danger: true })) {
-          db.history = []; db.session = null; save(); toast(L('Progress reset.', 'Fortschritt zurückgesetzt.')); refresh();
+          db.history = []; db.session = null; db.progress = {}; save(); toast(L('Progress reset.', 'Fortschritt zurückgesetzt.')); refresh();
         }
         if (act === 'all' && await confirmDialog({ title: L('Delete all data?', 'Alle Daten löschen?'), text: L('Your profile, progress, favourites and settings will be permanently deleted from this device. This cannot be undone.', 'Dein Profil, Fortschritt, Favoriten und Einstellungen werden dauerhaft von diesem Gerät gelöscht. Das kann nicht rückgängig gemacht werden.'), confirm: L('Delete everything', 'Alles löschen'), danger: true })) {
           resetAll();
@@ -185,7 +190,7 @@ function about() {
       </div>
       <div class="card"><p class="eyebrow">${L('Good to know', 'Gut zu wissen')}</p>
         <ul class="bullets mt-sm">
-          <li>${L('Exercise videos are not included yet – each exercise has written technique steps.', 'Übungsvideos sind noch nicht enthalten – jede Übung hat eine schriftliche Anleitung.')}</li>
+          <li>${L('Each exercise is shown by an animated figure plus written technique steps. Real videos can be added later.', 'Jede Übung zeigt eine animierte Figur und eine schriftliche Anleitung. Echte Videos können später ergänzt werden.')}</li>
           <li>${L('Food ratings are an approximate guide, not medical advice.', 'Die Food-Bewertungen sind eine grobe Orientierung, keine medizinische Beratung.')}</li>
           <li>${L('Reminders show while the app is open; use “Add to calendar” for alarms when it’s closed.', 'Erinnerungen erscheinen, solange die App offen ist; für Alarme bei geschlossener App „Zum Kalender hinzufügen“ nutzen.')}</li>
           <li>${L('Quote sources are unverified; no authors are attributed.', 'Die Quellen der Zitate sind nicht bestätigt; es werden keine Autoren genannt.')}</li>

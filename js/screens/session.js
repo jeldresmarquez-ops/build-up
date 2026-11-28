@@ -7,6 +7,12 @@ import * as S from '../logic/session.js';
 import { unit } from '../logic/stats.js';
 import { MESSAGES } from '../data/quotes.js';
 import { go } from '../router.js';
+import { toast } from '../ui.js';
+import { figureSvg, animateFigures } from '../figure.js';
+import { stepFor } from '../logic/progression.js';
+
+const RATING = { easy: () => L('Easy', 'Leicht'), hard: () => L('Hard', 'Schwer'), help: () => L('With help', 'Mit Hilfe') };
+export { RATING };
 
 let audio;
 function beep(times = 1) {
@@ -44,8 +50,19 @@ export function render() {
     if (reps === null) reps = it.target;
     const segs = s.items.map((x, k) => `<i class="${k < s.ex ? 'done' : k === s.ex ? 'cur' : ''}"></i>`).join('');
     let main = '', actions = '';
-    if (s.phase === 'rest') {
-      main = `<p class="eyebrow">${L('Rest', 'Pause')}</p>
+    if (s.phase === 'feedback') {
+      const fb = (r, emoji, title, sub) => `<button class="fb-btn" data-act="fb-${r}"><span class="fb-emoji">${emoji}</span>
+        <span class="grow"><span class="row-title">${title}</span><span class="row-sub wrap" style="display:block">${sub}</span></span></button>`;
+      const step = stepFor(it.exId);
+      const more = e.type === 'time' ? `+${step}s` : `+${step}`;
+      main = `<p class="eyebrow">${L('Exercise done', 'Übung geschafft')}</p>
+        <h1 class="session-name mt-sm">${e.name}</h1>
+        <p class="muted mt">${L('How was it for you?', 'Wie war es für dich?')}</p>`;
+      actions = `<div>${fb('easy', '💪', RATING.easy(), L('Next time a bit more ({m})', 'Nächstes Mal etwas mehr ({m})', { m: more }))}
+        ${fb('hard', '😤', RATING.hard(), L('Stays the same', 'Bleibt gleich'))}
+        ${fb('help', '🤝', RATING.help(), L('Stays the same', 'Bleibt gleich'))}</div>`;
+    } else if (s.phase === 'rest') {
+      main = `<div class="session-fig">${figureSvg(it.exId)}</div><p class="eyebrow">${L('Rest', 'Pause')}</p>
         <div class="session-big rest" data-t="count">${Math.ceil(S.remaining(s) / 1000)}</div>
         <p class="session-unit">${L('seconds', 'Sekunden')}</p>`;
       actions = `<div class="session-next">${icon('right')}<div class="grow"><p class="tiny muted">${L('Up next', 'Als Nächstes')}</p>
@@ -58,7 +75,7 @@ export function render() {
         : running && S.remaining(s) <= it.target * 1000 ? L('Second side', 'Zweite Seite')
         : running ? L('First side', 'Erste Seite')
         : L('{n}s each side', '{n}s pro Seite', { n: it.target });
-      main = `<p class="eyebrow">${setOf(s.set + 1, it.sets)}</p>
+      main = `<div class="session-fig">${figureSvg(it.exId)}</div><p class="eyebrow">${setOf(s.set + 1, it.sets)}</p>
         <h1 class="session-name mt-sm">${e.name}</h1>
         <div class="session-big" data-t="count">${running ? Math.ceil(S.remaining(s) / 1000) : total}</div>
         <p class="session-unit" data-t="side">${side}</p>`;
@@ -66,7 +83,7 @@ export function render() {
         ? `<button class="btn btn-primary btn-block btn-xl" data-act="time-done">${L('Done', 'Fertig')}</button>`
         : `<button class="btn btn-primary btn-block btn-xl" data-act="time-start">${icon('play', 'ic-sm')} ${L('Start {n}s', '{n}s starten', { n: total })}</button>`;
     } else {
-      main = `<p class="eyebrow">${setOf(s.set + 1, it.sets)}</p>
+      main = `<div class="session-fig">${figureSvg(it.exId)}</div><p class="eyebrow">${setOf(s.set + 1, it.sets)}</p>
         <h1 class="session-name mt-sm">${e.name}</h1>
         <div class="session-big" data-t="reps">${reps}</div>
         <p class="session-unit">${e.perSide ? L('reps each side', 'Wdh. pro Seite') : L('reps', 'Wiederholungen')} · ${L('target', 'Ziel')} ${it.target}</p>
@@ -82,7 +99,7 @@ export function render() {
       <div class="seg-bar">${segs}</div>
       <div class="session-main">${main}</div>
       <div class="session-actions">${actions}
-        <div class="between"><button class="link-btn" data-act="how">${icon('info', 'ic-sm')} ${L('How to', 'Anleitung')}</button>
+        <div class="between" ${s.phase === 'feedback' ? 'hidden' : ''}><button class="link-btn" data-act="how">${icon('info', 'ic-sm')} ${L('How to', 'Anleitung')}</button>
           <button class="link-btn" data-act="skip-ex">${L('Skip exercise', 'Übung überspringen')}</button>
           <button class="link-btn" data-act="finish">${L('Finish', 'Beenden')}</button></div></div>
       ${s.paused ? `<div class="paused-veil"><p class="eyebrow">${L('Paused', 'Pausiert')}</p><p class="session-clock" style="font-size:44px">${fmtDur(S.elapsed(s) / 1000)}</p>
@@ -90,6 +107,7 @@ export function render() {
         <button class="btn btn-ghost" data-act="finish">${L('Finish workout', 'Training beenden')}</button>
         <button class="btn btn-ghost" data-act="leave">${L('Back to app', 'Zurück zur App')}</button></div>` : ''}
     </div>`;
+    animateFigures(view);
   }
 
   function tick() {
@@ -156,6 +174,16 @@ export function render() {
         break;
       }
       case 'how': howTo(EX[it.exId]); break;
+      case 'fb-easy': case 'fb-hard': case 'fb-help': {
+        const r = S.answerFeedback(s, act.slice(3));
+        const e = EX[it.exId];
+        const u = n => (e.type === 'time' ? `${n}s` : `${n} ${L('reps', 'Wdh.')}`);
+        toast(act === 'fb-easy'
+          ? (r.change.added ? L('Strong! Next time: {n}', 'Stark! Nächstes Mal: {n}', { n: u(r.target + r.change.added) }) : L('Strong! You are at the maximum.', 'Stark! Du bist am Maximum.'))
+          : L('Okay – stays at {n}', 'Alles klar – bleibt bei {n}', { n: u(r.target) }));
+        done(r.result);
+        break;
+      }
     }
   }
 
@@ -181,10 +209,10 @@ export function render() {
 }
 
 function howTo(e) {
-  sheet(`<p class="eyebrow">${L('How to', 'Anleitung')}</p><h3 class="sheet-title mt-sm">${e.name}</h3>
+  sheet(`<div class="sheet-fig">${figureSvg(e.id)}</div><p class="eyebrow">${L('How to', 'Anleitung')}</p><h3 class="sheet-title mt-sm">${e.name}</h3>
     <ol class="steps">${e.technique.map(t => `<li>${esc(t)}</li>`).join('')}</ol>
     <p class="eyebrow mt">${L('Safety', 'Sicherheit')}</p><ul class="bullets safe mt-sm">${e.safety.map(t => `<li>${esc(t)}</li>`).join('')}</ul>
-    <button class="btn btn-ghost btn-block mt" data-close>${L('Got it', 'Verstanden')}</button>`);
+    <button class="btn btn-ghost btn-block mt" data-close>${L('Got it', 'Verstanden')}</button>`, { onMount: el => animateFigures(el) });
 }
 
 // ---------- summary ----------
@@ -206,7 +234,7 @@ export function summary({ id }) {
         ${e.newRecords.map(r => `<div class="row"><div class="row-icon">${icon('star')}</div><div class="grow"><div class="row-title">${EX[r.exId].name}</div>
           <div class="row-sub">${unit(r.exId, r.prev)} → ${unit(r.exId, r.best)}</div></div></div>`).join('')}</div>` : ''}
       <div class="card list-card">${e.items.map(it => `<div class="row"><div class="grow"><div class="row-title">${EX[it.exId].name}</div>
-        <div class="row-sub">${it.done.map(d => unit(it.exId, d)).join(' · ')}</div></div></div>`).join('')}</div>
+        <div class="row-sub">${it.done.map(d => unit(it.exId, d)).join(' · ')}${it.rating ? ' · ' + RATING[it.rating]() : ''}</div></div></div>`).join('')}</div>
       <div class="stack-sm"><a class="btn btn-primary btn-block" href="#/home">${L('Back to home', 'Zurück zum Start')}</a>
         <a class="btn btn-ghost btn-block" href="#/progress">${L('View progress', 'Fortschritt ansehen')}</a></div>`,
   };

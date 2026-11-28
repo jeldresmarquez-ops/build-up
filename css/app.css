@@ -434,3 +434,22 @@ a.card.row-flex, button.card.row-flex, a.card.between, button.card.between { dis
   .session-actions { gap: 6px; }
   .session-next { margin-bottom: 6px; padding: 10px 14px; }
 }
+/* Exercise animation figure */
+.fig { width: 100%; height: 100%; display: block; overflow: visible; }
+.fig polyline, .fig line { fill: none; stroke-linecap: round; stroke-linejoin: round; }
+.fig .fig-floor { stroke: var(--line2); stroke-width: 2; }
+.fig .fig-prop { fill: #26262c; stroke: var(--line2); stroke-width: 1.5; }
+.fig .fig-near polyline, .fig .fig-near line { stroke: var(--text); stroke-width: 5; }
+.fig .fig-near .torso { stroke-width: 6; }
+.fig .fig-far polyline { stroke: #5c5c66; stroke-width: 5; }
+.fig .head { fill: var(--text); }
+.media .fig { position: absolute; inset: 6% 4% 4%; width: 92%; height: 90%; }
+.media-tag { position: absolute; left: 12px; bottom: 10px; font-size: 11px; letter-spacing: .12em; text-transform: uppercase; color: var(--dim); font-weight: 600; }
+.session-fig { height: 120px; max-width: 260px; width: 100%; margin: 0 auto 10px; }
+.sheet-fig { height: 130px; margin: 0 auto 8px; max-width: 280px; }
+.fb-btn { width: 100%; text-align: left; display: flex; align-items: center; gap: 14px; padding: 16px 18px; border-radius: 18px; background: var(--card); border: 1px solid var(--line2); }
+.fb-btn + .fb-btn { margin-top: 10px; }
+.fb-btn:active { background: var(--card2); }
+.fb-btn .fb-emoji { width: 40px; height: 40px; border-radius: 12px; display: grid; place-items: center; background: var(--card2); font-size: 20px; flex: none; }
+@media (max-height: 700px) { .session-fig { height: 84px; margin-bottom: 4px; } .session-big { font-size: 96px; } }
+@media (max-height: 500px) { .session-fig { display: none; } }
