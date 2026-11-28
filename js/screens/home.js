@@ -8,7 +8,8 @@ import { nextReminder, dueToday } from '../logic/reminders.js';
 import { EX } from '../data/exercises.js';
 import { EXPERIENCE, label } from '../data/options.js';
 import { startSession } from '../logic/session.js';
-import { go } from '../router.js';
+import { go, refresh } from '../router.js';
+import { confirmEndSick } from './sick.js';
 
 function todayCard() {
   if (db.session) {
@@ -29,7 +30,8 @@ function todayCard() {
     return `<div class="card hero">
       <div><p class="eyebrow">${L('Sick mode', 'Krank-Modus')}</p><h2 class="h1 mt-sm">${L('Rest &amp;<br>get well', 'Ruhe &amp;<br>gesund werden')}</h2>
       <p class="muted small mt-sm">${esc(r.note)}</p></div>
-      <a class="btn btn-ghost btn-block mt" href="#/sick">${L('Open sick mode', 'Krank-Modus öffnen')}</a></div>`;
+      <div class="row-flex mt"><a class="btn btn-ghost grow" href="#/sick">${L('Open', 'Öffnen')}</a>
+        <button class="btn btn-outline grow" data-end-sick>${L('End sick mode', 'Krank-Modus beenden')}</button></div></div>`;
   }
   const w = buildWorkout(r.cat, db.profile, r.minutes);
   const lbl = r.kind === 'sick' ? L('Sick mode', 'Krank-Modus') : r.kind === 'rest' ? L('Rest day', 'Ruhetag') : r.kind === 'recover' ? L('Recovery', 'Erholung') : L('Today’s workout', 'Heutiges Training');
@@ -53,11 +55,11 @@ function sickRow() {
   const s = activeSick();
   if (s) {
     const n = sickDaysLeft();
-    return `<a class="card card-tight row-flex" href="#/sick" style="border-color:var(--accent)">
-      <div class="row-icon">${icon('shield')}</div>
+    return `<div class="card card-tight row-flex" style="border-color:var(--accent)">
+      <a class="row-flex grow" href="#/sick" style="min-width:0"><div class="row-icon">${icon('shield')}</div>
       <div class="grow"><p class="tiny muted">${L('Sick mode active', 'Krank-Modus aktiv')}</p>
-        <p class="row-title">${n ? L('{n} adjusted training days left', 'Noch {n} angepasste Trainingstage', { n }) : L('Feeling better?', 'Geht’s dir besser?')}</p></div>
-      ${icon('right', 'chev')}</a>`;
+        <p class="row-title">${n ? L('{n} days left', 'Noch {n} Tage', { n }) : L('Feeling better?', 'Geht’s dir besser?')}</p></div></a>
+      <button class="btn btn-ghost btn-sm" data-end-sick>${L('End', 'Beenden')}</button></div>`;
   }
   return `<a class="card card-tight row-flex" href="#/sick">
     <div class="row-icon">${icon('shield')}</div>
@@ -108,7 +110,8 @@ export function render() {
   return {
     html,
     mount(view) {
-      view.addEventListener('click', e => {
+      view.addEventListener('click', async e => {
+        if (e.target.closest('[data-end-sick]')) { if (await confirmEndSick()) refresh(); return; }
         const b = e.target.closest('[data-start]');
         if (!b) return;
         startSession(buildWorkout(b.dataset.start, db.profile, Number(b.dataset.min) || undefined));

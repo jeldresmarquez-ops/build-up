@@ -10,6 +10,19 @@ import { go, refresh } from '../router.js';
 
 let choice = null;
 
+// Ask once, then end sick mode. Used on the sick page, home and workout tab.
+export async function confirmEndSick() {
+  const ok = await confirmDialog({
+    title: L('End sick mode?', 'Krank-Modus beenden?'),
+    text: L('Your normal training plan is active again right away.', 'Dein normaler Trainingsplan ist sofort wieder aktiv.'),
+    confirm: L('End sick mode', 'Krank-Modus beenden'),
+  });
+  if (!ok) return false;
+  endSick();
+  toast(L('Sick mode ended. Welcome back!', 'Krank-Modus beendet. Willkommen zurück!'));
+  return true;
+}
+
 const amount = (exId, sets, n) => `${sets} × ${EX[exId].type === 'time' ? n + 's' : n}`;
 
 function lightList(w) {
@@ -53,7 +66,7 @@ function active(s) {
       <div class="grow"><div class="row-title">${k === today ? L('Today', 'Heute') : fmtDate(new Date(k + 'T12:00:00'))}</div>
       <div class="row-sub">${done ? L('Done', 'Erledigt') : mild ? L('Light training', 'Leichtes Training') : L('Rest', 'Ruhe')}</div></div></div>`;
   };
-  return `${backBar('#/workout', L('Sick mode', 'Krank-Modus'))}
+  return `${backBar('#/workout', L('Sick mode', 'Krank-Modus'), `<button class="link-btn" data-end-sick>${L('End', 'Beenden')}</button>`)}
     <div><p class="eyebrow" style="color:var(--accent)">${L('Sick mode on', 'Krank-Modus an')}</p>
       <h1 class="h1 mt-sm">${mild ? L('Train lightly', 'Leicht trainieren') : L('Rest', 'Ausruhen')}</h1>
       <p class="muted mt-sm">${!left ? L('Done! Feeling better?', 'Geschafft! Geht’s dir besser?')
@@ -62,7 +75,7 @@ function active(s) {
     ${canTrainNow ? `<button class="btn btn-primary btn-block btn-xl" data-go>${icon('play', 'ic-sm')} ${L('Start', 'Starten')} · ${fmtMin(w.seconds)}</button>` : ''}
     <div class="card list-card">${s.days.map(dayRow).join('')}</div>
     ${mild ? lightList(w) : `<button class="btn btn-ghost btn-block" data-sev-switch="mild">${L('I feel better – train lightly', 'Mir geht’s besser – leicht trainieren')}</button>`}
-    <button class="btn btn-primary btn-block" data-healthy>${icon('check', 'ic-sm')} ${L('I’m healthy again', 'Ich bin wieder gesund')}</button>
+    <button class="btn btn-primary btn-block" data-end-sick>${icon('x', 'ic-sm')} ${L('End sick mode', 'Krank-Modus beenden')}</button>
     <div class="center"><button class="link-btn" data-extend>${L('Still sick? +2 days', 'Noch krank? +2 Tage')}</button>
       ${mild ? ` · <button class="link-btn" data-sev-switch="severe">${L('Worse? Rest instead', 'Schlechter? Lieber Ruhe')}</button>` : ''}</div>
     ${warning()}`;
@@ -88,10 +101,8 @@ export function render() {
         }
         if (b.dataset.sevSwitch) { setSickSeverity(b.dataset.sevSwitch); refresh(); return; }
         if (b.matches('[data-extend]')) { extendSick(); toast(L('2 more days.', '2 Tage verlängert.')); refresh(); return; }
-        if (b.matches('[data-healthy]')) {
-          endSick();
-          toast(L('Welcome back!', 'Willkommen zurück!'));
-          go('home');
+        if (b.matches('[data-end-sick]')) {
+          if (await confirmEndSick()) go('home');
         }
       });
     },

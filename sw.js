@@ -1,5 +1,5 @@
 // BUILD UP service worker – offline support.
-const VERSION = 'buildup-v1.5.0';
+const VERSION = 'buildup-v1.5.1';
 const SHELL = [
   './', 'index.html', 'manifest.webmanifest', 'css/app.css',
   'js/app.js', 'js/i18n.js', 'js/store.js', 'js/ui.js', 'js/router.js',

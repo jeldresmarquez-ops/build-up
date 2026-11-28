@@ -6,6 +6,7 @@ import { startSession, logManual, deleteEntry } from '../logic/session.js';
 import { MINUTES, EXPERIENCE, label } from '../data/options.js';
 import { EX } from '../data/exercises.js';
 import { go, refresh } from '../router.js';
+import { confirmEndSick } from './sick.js';
 
 let weekOffset = 0;
 
@@ -55,11 +56,16 @@ export function render() {
           ${icon('right', 'chev')}</button>`;
       }).join('') || `<p class="muted small" style="padding:14px 0">${L('No sessions this week.', 'Keine Trainings in dieser Woche.')}</p>`}</div>
     </div>
-    <a class="card card-tight row-flex" href="#/sick" ${activeSick() ? 'style="border-color:var(--accent)"' : ''}>
+    ${activeSick() ? `<div class="card card-tight row-flex" style="border-color:var(--accent)">
+      <a class="row-flex grow" href="#/sick" style="min-width:0"><div class="row-icon">${icon('shield')}</div>
+      <div class="grow"><p class="row-title">${L('Sick mode active', 'Krank-Modus aktiv')}</p>
+        <p class="row-sub wrap">${L('Your plan is adjusted', 'Dein Plan ist angepasst')}</p></div></a>
+      <button class="btn btn-ghost btn-sm" data-end-sick>${L('End', 'Beenden')}</button></div>`
+    : `<a class="card card-tight row-flex" href="#/sick">
       <div class="row-icon">${icon('shield')}</div>
-      <div class="grow"><p class="row-title">${activeSick() ? L('Sick mode active', 'Krank-Modus aktiv') : L('Feeling sick?', 'Krank?')}</p>
-        <p class="row-sub wrap">${activeSick() ? L('Your plan is adjusted – tap for details', 'Dein Plan ist angepasst – tippen für Details') : L('Easy plan for your next 2 training days', 'Einfacher Plan für deine nächsten 2 Trainingstage')}</p></div>
-      ${icon('right', 'chev')}</a>
+      <div class="grow"><p class="row-title">${L('Feeling sick?', 'Krank?')}</p>
+        <p class="row-sub wrap">${L('Easy plan for your next 2 training days', 'Einfacher Plan für deine nächsten 2 Trainingstage')}</p></div>
+      ${icon('right', 'chev')}</a>`}
     <div class="grid2">
       <button class="card card-tight" data-edit-days><p class="tiny muted">${L('Training days', 'Trainingstage')}</p><p class="row-title mt-sm">${db.planDays.length ? [...db.planDays].sort().map(d => DAYS[d]).join(' · ') : L('None', 'Keine')}</p></button>
       <button class="card card-tight" data-edit-time><p class="tiny muted">${L('Session length', 'Trainingsdauer')}</p><p class="row-title mt-sm">${db.profile.minutes} min</p></button>
@@ -79,9 +85,10 @@ export function render() {
   return {
     html,
     mount(view) {
-      view.addEventListener('click', e => {
+      view.addEventListener('click', async e => {
         const t = e.target.closest('button');
         if (!t) return;
+        if (t.matches('[data-end-sick]')) { if (await confirmEndSick()) refresh(); return; }
         if (t.dataset.week) { weekOffset = Math.min(1, weekOffset + Number(t.dataset.week)); refresh(); return; }
         if (t.dataset.day) { daySheet(plan[Number(t.dataset.day)]); return; }
         if (t.matches('[data-edit-days]')) { editDays(); return; }
